@@ -173,7 +173,7 @@ async function poll() {
       void enableAudio();
     }
     const sent = ack;
-    const result = await requestApi("render", {renderer, ready, playing, ack: sent, visual: mirrorActive ? visualSnapshot() : null});
+    const result = await requestApi("render", {renderer, ready, playing, ack: sent, surface: parameters.get("setup") === "1" ? "setup" : "plain", visual: mirrorActive ? visualSnapshot() : null});
     if (lastSeen && (!result.accepted || boot !== result.boot || generation !== result.generation)) clearPlayback();
     if (ack === sent) ack = null;
     lastSeen = performance.now();

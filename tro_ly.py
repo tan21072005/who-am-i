@@ -9,6 +9,7 @@ from cai_dat_kenh import write_atomic
 from giong_noi import Speech, VIE_VOICE
 from tuong_tac import InteractionError, plain
 from thu_vien import MAX_SEGMENTS, read_json, write_json
+from tap_truyen import clip_info, estimate, split_episodes
 
 MINUTES = 30
 
@@ -47,12 +48,18 @@ class Rundown:
         self.preparing = False
         self.audio_note = ""
         self.wait_until = 0
+        self.interludes = 0
+        self.episode = None
+        self.episode_end = None
+        self.audio_index_key = None
+        self.audio_index = {}
         self.idle_armed = True
 
     @staticmethod
     def blank():
         return {"topic": "", "product": "", "notes": "", "lines": [""] * MINUTES,
-                "flow": "timed", "chapters": [], "source": "", "ground": False, "idle_start": False}
+                "flow": "timed", "chapters": [], "source": "", "ground": False, "idle_start": False,
+                "episodes": [0], "episode_minutes": 30, "chat_limit": 1, "joins": []}
 
     @staticmethod
     def checked_id(value):
@@ -85,6 +92,19 @@ class Rundown:
                     or not 0 <= chapter["slot"] < len(lines)):
                 raise InteractionError("Vị trí chương chưa hợp lệ.")
             plan["chapters"].append({"slot": chapter["slot"], "title": plain(chapter.get("title"), 150)})
+        for key, low, high, default in (("episode_minutes", 2, 180, 30), ("chat_limit", 0, 5, 1)):
+            number = value.get(key, default)
+            if type(number) is not int or not low <= number <= high:
+                raise InteractionError("Kiểm tra thời lượng tập hoặc số lượt xen vào.")
+            plan[key] = number
+        for key, default in (("joins", []), ("episodes", [0])):
+            slots = value.get(key, default)
+            if (not isinstance(slots, list) or any(type(slot) is not int or not 0 <= slot < len(lines) for slot in slots)
+                    or slots != sorted(set(slots)) or (key == "episodes" and (not slots or slots[0] != 0))):
+                raise InteractionError("Vị trí chia tập hoặc nối đoạn không hợp lệ.")
+            plan[key] = slots
+        if 0 in plan["joins"] or set(plan["joins"]) & set(plan["episodes"]):
+            raise InteractionError("Không nối qua đầu tập. Hãy chia tập lại hoặc chọn đoạn khác.")
         plan.update(flow=flow, source=plain(value.get("source", ""), 200),
                     ground=value.get("ground") is True, idle_start=value.get("idle_start") is True)
         return plan
@@ -107,14 +127,18 @@ class Rundown:
 
     def save(self, plan, fresh=False, source=None):
         plan = self.validate(plan)
-        reset = fresh or plan["lines"] != self.plan["lines"] or plan["flow"] != self.plan["flow"]
+        cursor = self.cursor
+        if fresh or plan["flow"] != self.plan["flow"]:
+            cursor = 0
+        elif plan["flow"] == "story":
+            cursor = min(cursor, len(plan["lines"]))
+            cursor = next((i for i in range(cursor) if self.plan["lines"][i] != plan["lines"][i]), cursor)
         self.persist(plan, fresh=fresh, source=source)
         self.plan = plan
         self._progress_key = None
         self.revision += 1
         self.audio_note = ""
-        if reset:
-            self.mark_cursor(0)
+        self.mark_cursor(cursor)
         self.idle_armed = True
 
     def open_blank(self):
@@ -201,6 +225,7 @@ class Rundown:
         if self.plan["flow"] == "story":
             self.mark_cursor(slot + 1)
             self.wait_until = time.monotonic() + 0.45
+            self.interludes = 0
 
     def fail_playback(self, reason):
         if self.mode == "running":
@@ -231,6 +256,63 @@ class Rundown:
         path, key = self.audio_file(slot, text, speaker)
         write_atomic(path, key + speech.provider.encode() + b"\n" + speech.audio)
 
+    def audio_key(self, speaker):
+        return self.script_id, self.revision, speaker.engine, speaker.voice, speaker.rate
+
+    def prepared(self, slot, speaker, seconds):
+        if self.audio_index_key == self.audio_key(speaker):
+            self.audio_index[slot] = seconds
+
+    def audio_details(self, speaker):
+        key = self.audio_key(speaker)
+        if key != self.audio_index_key:
+            self.audio_index = {}
+            for slot, text in enumerate(self.plan["lines"]):
+                if not text:
+                    continue
+                path, signature = self.audio_file(slot, text, speaker)
+                try:
+                    with path.open("rb") as handle:
+                        if handle.read(len(signature)) != signature:
+                            continue
+                        info = clip_info(handle, handle.readline(80).decode().strip())
+                        if info:
+                            self.audio_index[slot] = info[1]
+                except (OSError, UnicodeError):
+                    continue
+            self.audio_index_key = key
+        return self.audio_index
+
+    def episode_range(self, index):
+        starts = self.plan["episodes"]
+        if type(index) is not int or not 0 <= index < len(starts) or self.plan["flow"] != "story":
+            raise InteractionError("Chọn một tập đã lưu.")
+        end = starts[index + 1] if index + 1 < len(starts) else len(self.plan["lines"])
+        return starts[index], end
+
+    def make_episodes(self, minutes, speaker):
+        if self.plan["flow"] != "story" or not any(self.plan["lines"]):
+            raise InteractionError("Cần lưu một kịch bản kể nối tiếp.")
+        if type(minutes) is not int or not 2 <= minutes <= 180:
+            raise InteractionError("Thời lượng tập phải trong khoảng 2–180 phút.")
+        audio = self.audio_details(speaker)
+        durations = [audio.get(i) or estimate(text, speaker) if text else 0
+                     for i, text in enumerate(self.plan["lines"])]
+        starts = split_episodes(self.plan["lines"], self.plan["chapters"], self.plan["joins"], durations, minutes * 60)
+        self.save({**self.plan, "episodes": starts, "episode_minutes": minutes})
+
+    def audio_summary(self, speaker, episode):
+        start, end = self.episode_range(episode) if episode is not None else (0, len(self.plan["lines"]))
+        clips = [i for i in range(start, end) if self.plan["lines"][i]]
+        audio = self.audio_details(speaker)
+        return {"total": len(clips), "ready": sum(i in audio for i in clips),
+                "seconds": round(sum(audio.get(i) or estimate(self.plan["lines"][i], speaker) for i in clips)),
+                "estimated": any(audio.get(i) is None for i in clips)}
+
+    def story_has_turn(self, slot):
+        return slot is not None and self.plan["flow"] == "story" and (
+            self.interludes >= self.plan["chat_limit"] or slot in self.plan["joins"])
+
     def clock(self):
         return self.elapsed + (time.monotonic() - self.anchor if self.mode == "running" else 0)
 
@@ -239,8 +321,9 @@ class Rundown:
         self.mode = "stopped"
         self.elapsed = 0
         self.last = -1
+        self.episode = self.episode_end = None
 
-    def control(self, op, slot=None):
+    def control(self, op, slot=None, episode=None):
         if op == "stop":
             self.stop()
             self.idle_armed = False
@@ -248,6 +331,11 @@ class Rundown:
             if not any(self.plan["lines"]):
                 raise InteractionError("Hãy lưu ít nhất một đoạn thoại.")
             self.stop()
+            if episode is not None:
+                start, self.episode_end = self.episode_range(episode)
+                self.episode = episode
+                slot = self.cursor if start <= self.cursor < self.episode_end else start
+            self.interludes = self.plan["chat_limit"]
             if self.plan["flow"] == "story" and (slot is not None or self.cursor >= len(self.plan["lines"])):
                 self.mark_cursor(slot if slot is not None else 0)
             self.wait_until = 0
@@ -267,7 +355,7 @@ class Rundown:
         if self.mode != "running":
             return None
         if self.plan["flow"] == "story":
-            if self.cursor >= len(self.plan["lines"]):
+            if self.cursor >= (self.episode_end or len(self.plan["lines"])):
                 self.elapsed = self.clock()
                 self.mode = "done"
             return self.cursor if self.mode == "running" else None
@@ -282,7 +370,7 @@ class Rundown:
     def state(self):
         self.slot()
         return {"mode": self.mode, "seconds": int(self.clock()), "drafting": self.drafting,
-                "note": self.draft_note, "revision": self.revision, "cursor": self.cursor, "id": self.script_id}
+                "note": self.draft_note, "revision": self.revision, "cursor": self.cursor, "id": self.script_id, "episode": self.episode}
 
 
 def generate_lines(plan, persona, ask, update):

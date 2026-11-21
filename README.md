@@ -17,6 +17,9 @@ Hệ thống linh vật ảo tương tác thời gian thực cho TikTok LIVE / O
 - **Kể chuyện & Thư viện kịch bản (Story & Script Library)**:
   - Quản lý thư viện nhiều kịch bản, lưu bản sao, khôi phục các phiên bản cũ.
   - Nhập tài liệu Markdown (.md), TXT (UTF-8) hoặc Word (.docx) dung lượng lên đến 12 MB, tự chia tách thành tối đa 6.000 đoạn, tự nhận diện tiêu đề chương (Heading) và loại bỏ URL.
+  - **Chia tập theo thời lượng**: Tự động ngắt tập thông minh theo thời lượng mục tiêu và ưu tiên đầu chương; hỗ trợ *Chuẩn bị tập này* (tạo tiếng cho tập) và *Phát tập này* (chạy và tự dừng ở cuối tập).
+  - **Chen lời tương tác & Kể liền**: Cấu hình số lượt nhường cho chat giữa hai đoạn (từ 0 đến 5 lượt); tùy chọn *Kể liền với đoạn trước* cho các câu chốt cần nói liền mạch.
+  - **Kiểm tra phát LIVE**: Theo dõi phiên overlay đang giữ quyền phát, tình trạng mở tiếng, giọng đọc phát thành công gần nhất, số đoạn đã có audio và trạng thái phát trực tiếp.
   - Hỗ trợ AI (9Router) kể lại từng phần theo phong cách của Bông.
   - Phát kịch bản linh hoạt: Kể từ đầu, Kể tiếp hoặc Phát từ đoạn đã chọn; tự động nối lại truyện sau khi trả lời bình luận của khán giả.
   - Sắp xếp danh sách kịch bản trong thư viện tự động theo file CSV xuất từ Google Sheets.
@@ -40,6 +43,7 @@ who-am-i/
 ├── giong_noi.py               # Module tổng hợp giọng nói (VieNeu, Edge TTS, eSpeak)
 ├── router_api.py              # Kết nối API 9Router
 ├── thiet_lap.py               # Quản lý cài đặt cấu hình kênh
+├── tap_truyen.py              # Chia tập truyện theo thời lượng & ngắt chương
 ├── thu_vien.py                # Xử lý nhập tài liệu truyện (Word .docx, .md, .txt) & CSV Sheet
 ├── tro_ly.py                  # Quản lý kịch bản Trợ lý 30 phút & cache âm thanh
 ├── tuong_tac.py               # Xử lý bình luận TikTok, cử chỉ và hàng đợi

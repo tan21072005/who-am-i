@@ -98,11 +98,26 @@
 <p id="show-note" class="subtle" role="status"></p>
 </section>
 <section class="panel stack">
+<h2>Kiểm tra phát LIVE</h2>
+<dl class="status-list">
+  <div><dt>Nguồn giữ quyền phát</dt><dd id="show-check-source">Đang kiểm tra…</dd></div>
+  <div><dt>Giọng đọc</dt><dd id="show-check-voice">—</dd></div>
+  <div><dt>Âm thanh của tập</dt><dd id="show-check-audio">—</dd></div>
+  <div><dt>Bông đang làm gì</dt><dd id="show-check-now">—</dd></div>
+</dl>
 <h2>Lời thoại</h2>
 <p id="show-source" class="subtle"></p>
+<div id="show-story-controls" class="stack" hidden>
+<label>Số lượt chen tối đa giữa hai đoạn<input id="show-chat_limit" type="number" min="0" max="5" step="1" value="1"></label>
+<label>Thời lượng mục tiêu mỗi tập (phút)<input id="show-episode-minutes" type="number" min="2" max="180" step="1" value="30"></label>
+<button id="show-episodes">Chia tập theo thời lượng</button>
+<label>Phạm vi phát<select id="show-episode"></select></label>
+<div class="row"><button id="show-prepare-episode">Chuẩn bị tập này</button><button id="show-start-episode">Phát tập này</button></div>
+</div>
 <label id="show-chapter-label" hidden>Đến chương<select id="show-chapter"></select></label>
 <label>Chọn đoạn để sửa<select id="show-minute"></select></label>
 <label>Lời Bông đọc<textarea id="show-line" maxlength="480" rows="5" placeholder="Nhập lời Bông đọc."></textarea></label>
+<label id="show-join-label" class="check" hidden><input id="show-join" type="checkbox"> Kể liền với đoạn trước, chưa chen chat</label>
 <div class="row"><button id="show-prev">Đoạn trước</button><button id="show-next">Đoạn sau</button><button id="show-add">Thêm đoạn</button><button id="show-save">Lưu kịch bản</button><button id="show-prepare">Tạo tiếng trước</button></div>
 <div class="row"><button id="show-retell">AI kể lại phần đã chọn</button><button id="show-prepare-chapter">Tạo tiếng phần đã chọn</button></div>
 <small id="show-section-help">Bắt đầu từ đoạn đang chọn đến hết chương. AI kể lại tối đa 30 đoạn mỗi lượt.</small>

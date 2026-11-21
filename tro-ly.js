@@ -2,19 +2,51 @@
 (() => {
   const el = key => document.getElementById("show-" + key);
   const pane = document.getElementById("pane-assistant");
-  const fields = ["topic", "product", "notes", "flow", "ground", "idle_start"];
+  const fields = ["topic", "product", "notes", "flow", "ground", "idle_start", "chat_limit"];
   const minute = el("minute");
   const line = el("line");
   let revision = -1;
-  let plan = {lines: [], chapters: [], flow: "timed"};
+  let plan = {lines: [], chapters: [], flow: "timed", episodes: [0], joins: []};
   let dirty = false;
   let sending = false;
   let polling = false;
   let state = {mode: "stopped", seconds: 0, cursor: 0};
+  const episode = () => el("episode").value === "" ? null : Number(el("episode").value);
   const index = () => Math.max(0, minute.selectedIndex);
   const notify = message => { el("message").textContent = message; };
   const asClock = seconds => Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
   const hasText = () => plan.lines.some(Boolean);
+
+  function paintChecks() {
+    const info = state.checks;
+    if (!info) return;
+    const surface = info.surface === "setup" ? "overlay setup=1" : info.surface === "plain" ? "overlay thường" : "overlay";
+    el("check-source").textContent = info.renderer
+      ? `${surface} · phiên ${info.renderer} · ${info.ready ? "đã mở tiếng" : "chưa mở tiếng"}${info.mirror ? " · có nguồn mirror" : ""}`
+      : "Overlay phát chính chưa kết nối";
+    el("check-voice").textContent = [
+      info.engine || "Chưa chọn giọng",
+      info.voiceAvailable ? "" : "Thiếu bộ giọng",
+      info.playedVoice ? "Đã phát bằng " + info.playedVoice : "Chờ phát thử"
+    ].filter(Boolean).join(" · ");
+    const audio = info.audio;
+    el("check-audio").textContent = audio?.total
+      ? `${audio.ready}/${audio.total} đoạn sẵn sàng · thiếu ${audio.total - audio.ready} · ${audio.estimated ? "ước tính " : ""}${asClock(audio.seconds)}`
+      : "Chưa có lời thoại";
+    let activity = "Sẵn sàng";
+    if (!info.renderer) activity = "Overlay mất kết nối";
+    else if (!info.ready) activity = "Đang chờ bật âm thanh";
+    else if (info.playingSlot != null) activity = "Đang kể đoạn " + (info.playingSlot + 1);
+    else if (["chat", "approved"].includes(info.playingKind)) activity = "Đang trả lời chat";
+    else if (info.playingKind) activity = "Đang phát lời hoặc hiệu ứng";
+    else if (state.mode === "paused") activity = "Kịch bản đang tạm dừng";
+    else if (state.preparing) activity = "Đang tạo tiếng trước";
+    else if (info.poll) activity = "Đang chờ kết thúc bình chọn";
+    else if (info.worker === "script") activity = "Đang chuẩn bị đoạn " + (state.cursor + 1);
+    else if (info.worker === "chat") activity = "Đang soạn lời trả lời chat";
+    else if (state.mode === "running") activity = "Đang chờ đoạn tiếp theo";
+    el("check-now").textContent = activity + (info.drafts ? ` · ${info.drafts} câu chờ duyệt` : "");
+  }
 
   function paint() {
     const running = state.mode === "running";
@@ -28,6 +60,15 @@
     el("generate").disabled = !edit || story;
     el("add").disabled = !edit || !story || plan.lines.length >= 6000;
     el("sheet").disabled = !edit || dirty;
+    el("story-controls").hidden = !story;
+    el("join-label").hidden = !story;
+    el("join").checked = plan.joins.includes(index());
+    el("join").disabled = !edit || index() === 0 || plan.episodes.includes(index());
+    el("episode-minutes").disabled = !edit;
+    el("episodes").disabled = !edit || dirty || !hasText();
+    el("episode").disabled = running || paused || sending;
+    el("prepare-episode").disabled = !edit || dirty || episode() === null || !hasText();
+    el("start-episode").disabled = !edit || dirty || episode() === null || !hasText();
     for (const id of ["prepare", "start", "from", "retell", "prepare-chapter"]) {
       el(id).disabled = !edit || dirty || !hasText();
     }
@@ -45,6 +86,7 @@
     const progress = story ? `Đã kể ${state.cursor}/${plan.lines.length} đoạn` : "30:00";
     el("clock").textContent = `${modes[state.mode]} · ${asClock(state.seconds)} / ${progress}`;
     el("note").textContent = state.audioNote || state.note || "";
+    paintChecks();
   }
 
   function label(i) {
@@ -68,6 +110,7 @@
 
   function apply(result) {
     const previousId = state.id;
+    const previousEpisode = episode();
     state = result;
     if (!result.plan) return;
     plan = result.plan;
@@ -77,6 +120,15 @@
     }
     revision = result.revision;
     dirty = false;
+    el("episode-minutes").value = plan.episode_minutes;
+    const options = plan.episodes.map((start, i) => {
+      const end = plan.episodes[i + 1] ?? plan.lines.length;
+      const chapter = plan.chapters.find(item => item.slot === start);
+      return new Option(`Tập ${i + 1} · Đoạn ${start + 1}–${end}${chapter ? " · " + chapter.title : ""}`, i);
+    });
+    el("episode").replaceChildren(new Option("Toàn bộ kịch bản", ""), ...options);
+    const selected = result.episode ?? (previousId === result.id ? previousEpisode : null);
+    if (selected != null && selected < options.length) el("episode").value = String(selected);
     el("source").textContent = plan.source ? "Tài liệu nguồn · " + plan.source : "";
     el("library").replaceChildren(new Option("Chọn kịch bản", ""),
       ...result.catalog.map(item => new Option(item.title, item.id)));
@@ -97,7 +149,8 @@
       notify("Chế độ theo lịch chỉ chứa 30 đoạn. Hãy tạo kịch bản theo lịch riêng.");
       return;
     }
-    plan[key] = el(key).type === "checkbox" ? el(key).checked : el(key).value;
+    plan[key] = el(key).type === "checkbox" ? el(key).checked :
+      el(key).type === "number" ? Number(el(key).value) : el(key).value;
     if (key === "flow") {
       if (plan.flow === "timed") while (plan.lines.length < 30) plan.lines.push("");
       drawLines();
@@ -109,6 +162,24 @@
     minute.options[index()].text = label(index());
     changed();
   };
+  el("join").onchange = () => {
+    plan.joins = plan.joins.filter(slot => slot !== index());
+    if (el("join").checked) plan.joins.push(index());
+    plan.joins.sort((a, b) => a - b);
+    changed();
+  };
+  el("episode").onchange = () => {
+    if (episode() !== null) move(plan.episodes[episode()]);
+    void refreshEpisode();
+  };
+  async function refreshEpisode() {
+    try {
+      const selected = episode();
+      const result = await requestApi("assistant", {operation: "status", episode: selected});
+      if (!sending && selected === episode() && result.revision === revision) apply(result);
+      paint();
+    } catch (error) { notify(error.message); }
+  }
   minute.onchange = () => move(index());
   el("chapter").onchange = () => {
     if (el("chapter").value !== "") move(Number(el("chapter").value));
@@ -160,6 +231,9 @@
   for (const op of ["save", "generate", "prepare", "start", "stop", "pause", "resume", "new", "duplicate", "import", "sheet"]) {
     el(op).onclick = () => void run(op);
   }
+  el("episodes").onclick = () => void run("episodes", {minutes: Number(el("episode-minutes").value)});
+  el("prepare-episode").onclick = () => void run("prepare", {episode: episode()});
+  el("start-episode").onclick = () => void run("start", {episode: episode()});
   el("from").onclick = () => void run("start", {slot: index()});
   el("retell").onclick = () => void run("retell", {slot: index()});
   el("prepare-chapter").onclick = () => void run("prepare", {slot: index(), chapter: true});
@@ -173,8 +247,9 @@
       polling = true;
       const current = revision;
       try {
-        const result = await requestApi("assistant", {operation: current < 0 ? "load" : "status"});
-        if (!sending && current === revision) {
+        const selected = plan.flow === "story" ? episode() : null;
+        const result = await requestApi("assistant", {operation: current < 0 ? "load" : "status", episode: selected});
+        if (!sending && current === revision && selected === (plan.flow === "story" ? episode() : null)) {
           if (!result.plan && result.revision !== revision && dirty && !state.drafting) {
             notify("Kịch bản đã đổi ở cửa sổ khác. Sao chép lời đang sửa rồi tải lại trang.");
           } else {
