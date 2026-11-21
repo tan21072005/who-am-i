@@ -1585,7 +1585,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "same-origin")
-            csp = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' data: blob: https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data: https:; worker-src 'self' blob:; base-uri 'none'; frame-ancestors 'self' *"
+            self.send_header("X-Frame-Options", "SAMEORIGIN")
+            csp = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' data: blob: https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data: https:; worker-src 'self' blob:; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'"
             self.send_header("Content-Security-Policy", csp)
             self.end_headers()
             self.wfile.write(data)
