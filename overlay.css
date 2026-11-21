@@ -11,35 +11,35 @@ body.solid {
 main {
   width: 100%;
   height: 100%;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: relative;
 }
 
 #stage {
   position: relative;
   width: min(100vw, 90.56vh);
-  height: min(110.42vw, 100vh);
-  aspect-ratio: 480 / 530;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  max-width: 100vw;
+  max-height: 100vh;
+  margin: auto;
+  display: block;
 }
 
 #stage canvas,
 canvas {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
-/* Khung thoại mặc định: Nằm TRÊN ĐẦU con gián Bông */
+/* Khung thoại mặc định: Cố định TRÊN ĐẦU con gián Bông */
 #caption {
   position: absolute;
-  top: 3.5%;
-  bottom: auto;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 3.5% !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
   width: max-content;
   max-width: min(92%, 420px);
   box-sizing: border-box;
@@ -77,7 +77,7 @@ canvas {
   overflow-wrap: anywhere;
 }
 
-/* Đuôi khung thoại: Mặc định TRỎ XUỐNG đỉnh đầu Bông */
+/* Đuôi khung thoại mặc định: TRỎ XUỐNG đỉnh đầu Bông */
 .bubble-tail {
   position: absolute;
   bottom: -12px;
@@ -120,8 +120,37 @@ canvas {
   letter-spacing: 0.5px;
 }
 
+/* Chủ đề Comic / Pop-art */
+#caption.bubble-comic .bubble-inner {
+  position: relative;
+  background: #fffef0;
+  border: 3.5px solid #141414;
+  border-radius: 18px;
+  padding: .58em 1.15em;
+  box-shadow: 4px 4px 0px #ffd700, 6px 6px 0px #141414;
+  outline: none;
+}
+#caption.bubble-comic #caption-text {
+  color: #121212;
+  font: 800 clamp(16px, 3.8vmin, 26px)/1.32 "Impact", "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+}
+#caption.bubble-comic .bubble-tail {
+  border-top-color: #141414;
+}
+#caption.bubble-comic .bubble-tail::after {
+  border-top-color: #fffef0;
+}
+#caption.bubble-comic .bubble-page {
+  background: #ffd700;
+  color: #141414;
+  border: 2px solid #141414;
+  font-weight: 800;
+}
+
 /* Chủ đề Pastel (đường chỉ may) */
 #caption.bubble-pastel .bubble-inner {
+  position: relative;
   background: #fff8f2;
   border: 3.5px solid #2d2035;
   border-radius: 24px;
@@ -138,25 +167,9 @@ canvas {
 #caption.bubble-pastel .bubble-tail::after { border-top-color: #fff8f2; }
 #caption.bubble-pastel .bubble-page { background: #2d2035; color: #fff; border-color: #2d2035; }
 
-/* Chủ đề Comic / Pop-art */
-#caption.bubble-comic .bubble-inner {
-  background: #fffef0;
-  border: 4px solid #141414;
-  border-radius: 18px;
-  padding: .62em 1.1em;
-  box-shadow: 6px 6px 0px #ffd700, 8px 8px 0px #141414;
-  outline: none;
-}
-#caption.bubble-comic #caption-text {
-  color: #121212;
-  font: 800 clamp(16px, 3.9vmin, 27px)/1.32 "Bangers", "Impact", system-ui, sans-serif;
-}
-#caption.bubble-comic .bubble-tail { border-top-color: #141414; }
-#caption.bubble-comic .bubble-tail::after { border-top-color: #fffef0; }
-#caption.bubble-comic .bubble-page { background: #ffd700; color: #141414; border: 2px solid #141414; font-weight: 800; }
-
 /* Chủ đề Cloud / Mây */
 #caption.bubble-cloud .bubble-inner {
+  position: relative;
   background: #f4efff;
   border: 3.5px solid #362947;
   border-radius: 30px 30px 24px 24px;
@@ -175,6 +188,7 @@ canvas {
 
 /* Chủ đề Mint */
 #caption.bubble-mint .bubble-inner {
+  position: relative;
   background: #f0faf4;
   border: 3.5px solid #1c3b2b;
   border-radius: 22px;
@@ -191,10 +205,10 @@ canvas {
 #caption.bubble-mint .bubble-tail::after { border-top-color: #f0faf4; }
 #caption.bubble-mint .bubble-page { background: #1c3b2b; color: #fff; border-color: #1c3b2b; }
 
-/* Tùy chọn đặt khung thoại ở dưới chân (khi pos=bottom) */
+/* Tùy chọn đặt khung thoại ở dưới chân (chỉ khi pos=bottom) */
 #caption.pos-bottom {
-  top: auto;
-  bottom: 5%;
+  top: auto !important;
+  bottom: 5% !important;
 }
 #caption.pos-bottom .bubble-tail {
   top: -12px;
@@ -207,26 +221,35 @@ canvas {
   border-top: none;
   border-bottom: 11.5px solid #ffffff;
 }
-#caption.pos-bottom.bubble-pastel .bubble-tail { border-bottom-color: #2d2035; }
-#caption.pos-bottom.bubble-pastel .bubble-tail::after { border-bottom-color: #fff8f2; }
 #caption.pos-bottom.bubble-comic .bubble-tail { border-bottom-color: #141414; }
 #caption.pos-bottom.bubble-comic .bubble-tail::after { border-bottom-color: #fffef0; }
+#caption.pos-bottom.bubble-pastel .bubble-tail { border-bottom-color: #2d2035; }
+#caption.pos-bottom.bubble-pastel .bubble-tail::after { border-bottom-color: #fff8f2; }
 #caption.pos-bottom.bubble-cloud .bubble-tail { border-bottom-color: #362947; }
 #caption.pos-bottom.bubble-cloud .bubble-tail::after { border-bottom-color: #f4efff; }
 #caption.pos-bottom.bubble-mint .bubble-tail { border-bottom-color: #1c3b2b; }
 #caption.pos-bottom.bubble-mint .bubble-tail::after { border-bottom-color: #f0faf4; }
 
+/* Nút Bật âm thanh to, rõ ràng, nhấp nháy thu hút chú ý */
 #unlock {
   position: absolute;
-  inset: auto auto 10px 10px;
-  border: 1px solid #5d3944;
-  border-radius: 8px;
-  background: #ffcfaa;
-  color: #241a22;
-  padding: 9px 13px;
-  font: 700 16px system-ui, sans-serif;
+  top: 15px;
+  left: 15px;
+  border: 2px solid #ff7b92;
+  border-radius: 12px;
+  background: #ff5277;
+  color: #ffffff;
+  padding: 12px 20px;
+  font: 800 16px system-ui, sans-serif;
   cursor: pointer;
-  z-index: 200;
+  z-index: 9999;
+  box-shadow: 0 4px 14px rgba(255, 82, 119, 0.45);
+  animation: pulse 1.6s infinite ease-in-out;
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
 }
 
 #live-card {

@@ -1,8 +1,22 @@
 "use strict";
 const el = id => document.getElementById(id);
-const url = location.origin + "/overlay.html?setup=1";
-el("overlay-url").textContent = url;
-el("mirror-url").textContent = location.origin + "/overlay.html?mirror=1&captions=1";
+function updateOverlayUrls() {
+  const style = el("bubble-style-select")?.value || "manga";
+  const pos = el("bubble-pos-select")?.value || "top";
+  let params = "captions=1";
+  if (style !== "manga") params += `&bubble=${style}`;
+  if (pos !== "top") params += `&pos=${pos}`;
+
+  const setupUrl = `${location.origin}/overlay.html?setup=1&${params}`;
+  const mirrorUrl = `${location.origin}/overlay.html?mirror=1&${params}`;
+
+  if (el("overlay-url")) el("overlay-url").textContent = setupUrl;
+  if (el("mirror-url")) el("mirror-url").textContent = mirrorUrl;
+  if (el("open-test-link")) el("open-test-link").href = setupUrl;
+}
+el("bubble-style-select")?.addEventListener("change", updateOverlayUrls);
+el("bubble-pos-select")?.addEventListener("change", updateOverlayUrls);
+updateOverlayUrls();
 for (const [value, text] of Object.entries(BongHoa.actions)) el("action").add(new Option(text, value));
 el("action").value = "WAVE";
 let lastDrafts;

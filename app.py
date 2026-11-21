@@ -584,7 +584,7 @@ class Channel:
                                    text=visual.get("text") or self.active["text"]) if synced else None,
                 }
             ready = body.get("ready") is True
-            if self.renderer is None or (not self.ready and ready and not self.active):
+            if self.renderer is None or (not self.active and (not self.ready or ready)):
                 self.renderer = renderer
             accepted = renderer == self.renderer
             out = {"accepted": accepted, "boot": self.boot,

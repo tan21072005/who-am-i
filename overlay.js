@@ -122,6 +122,12 @@ async function enableAudio() {
   setUnlock();
 }
 unlock.addEventListener("click", enableAudio);
+window.addEventListener("click", () => {
+  if (!ready && !mirror) void enableAudio();
+});
+window.addEventListener("keydown", () => {
+  if (!ready && !mirror) void enableAudio();
+});
 if (!mirror) void enableAudio();
 
 function clearPlayback() {

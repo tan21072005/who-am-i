@@ -199,10 +199,27 @@
 <div class="stack">
 <section class="panel stack">
           <h2>Nguồn nhân vật để phát</h2>
+          <div class="row">
+            <label style="flex: 1;">Kiểu khung thoại
+              <select id="bubble-style-select">
+                <option value="manga">Truyện tranh Doraemon (đen trắng)</option>
+                <option value="comic">Comic Pop-art (vàng đen nổi bật)</option>
+                <option value="pastel">Pastel dễ thương (chỉ may hồng)</option>
+                <option value="cloud">Mây bồng bềnh (tím dịu)</option>
+                <option value="mint">Bạc hà thanh mát (xanh mint)</option>
+              </select>
+            </label>
+            <label style="flex: 1;">Vị trí khung thoại
+              <select id="bubble-pos-select">
+                <option value="top">Trên đầu Bông (Mặc định)</option>
+                <option value="bottom">Dưới chân Bông</option>
+              </select>
+            </label>
+          </div>
           <code class="code" id="overlay-url"></code>
           <div class="row">
             <button id="copy">Chép URL</button>
-            <a class="button" href="/overlay.html?setup=1&captions=1" target="_blank" rel="noopener">Mở phát thử</a>
+            <a class="button" id="open-test-link" href="/overlay.html?setup=1&captions=1" target="_blank" rel="noopener">Mở phát thử</a>
           </div>
           <details class="source-help">
             <summary>Phương pháp 1 · OBS Studio</summary>
