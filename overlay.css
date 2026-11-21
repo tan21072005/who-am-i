@@ -1,14 +1,47 @@
-html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
-body.solid { background: radial-gradient(ellipse at 55% 43%, #ffe1aa, #ad7586 85%); }
-main { width: 100%; height: 100%; display: grid; place-items: center; position: relative; }
-canvas { display: block; width: min(100vw, 90.56vh); height: auto; }
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+body.solid {
+  background: radial-gradient(ellipse at 55% 43%, #ffe1aa, #ad7586 85%);
+}
+main {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+#stage {
+  position: relative;
+  width: min(100vw, 90.56vh);
+  height: min(110.42vw, 100vh);
+  aspect-ratio: 480 / 530;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#stage canvas,
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Khung thoại mặc định: Nằm TRÊN ĐẦU con gián Bông */
 #caption {
   position: absolute;
-  bottom: 6%;
+  top: 3.5%;
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
-  max-width: clamp(280px, 86vw, 450px);
+  max-width: min(92%, 420px);
   box-sizing: border-box;
   text-align: center;
   z-index: 100;
@@ -21,48 +54,109 @@ canvas { display: block; width: min(100vw, 90.56vh); height: auto; }
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
-/* Default / Pastel Theme (Ảnh 2 & 3: Cute pastel với đường chỉ khâu đứt đoạn) */
-#caption.bubble-pastel .bubble-inner,
+/* Phong cách Manga Đen Trắng kinh điển Doraemon (Mặc định) */
+#caption .bubble-inner,
+#caption.bubble-manga .bubble-inner,
 #caption:not([class*="bubble-"]) .bubble-inner {
   position: relative;
+  background: #ffffff;
+  border: 3px solid #000000;
+  border-radius: 24px;
+  padding: .55em 1.15em;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.16);
+  outline: none;
+}
+
+#caption #caption-text,
+#caption.bubble-manga #caption-text,
+#caption:not([class*="bubble-"]) #caption-text {
+  color: #000000;
+  font: 750 clamp(16px, 3.8vmin, 26px)/1.35 "Segoe UI", "Baloo 2", system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+  overflow-wrap: anywhere;
+}
+
+/* Đuôi khung thoại: Mặc định TRỎ XUỐNG đỉnh đầu Bông */
+.bubble-tail {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 14px solid #000000;
+  border-bottom: none;
+}
+
+.bubble-tail::after {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: -9px;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 11.5px solid #ffffff;
+  border-bottom: none;
+}
+
+/* Số trang phân đoạn (1/2, 2/2) phong cách Manga */
+.bubble-page,
+#caption.bubble-manga .bubble-page {
+  position: absolute;
+  bottom: -11px;
+  right: 16px;
+  background: #000000;
+  color: #ffffff;
+  border: 1.5px solid #000000;
+  font: 750 11px/1.35 system-ui, sans-serif;
+  padding: 1.5px 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.5px;
+}
+
+/* Chủ đề Pastel (đường chỉ may) */
+#caption.bubble-pastel .bubble-inner {
   background: #fff8f2;
   border: 3.5px solid #2d2035;
   border-radius: 24px;
   padding: .58em 1.05em;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
   outline: 2px dashed rgba(225, 160, 185, 0.85);
   outline-offset: -6px;
 }
-
-#caption.bubble-pastel #caption-text,
-#caption:not([class*="bubble-"]) #caption-text {
+#caption.bubble-pastel #caption-text {
   color: #2b1b30;
-  font: 750 clamp(16px, 3.8vmin, 26px)/1.38 "Baloo 2", "Quicksand", system-ui, -apple-system, sans-serif;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
-  overflow-wrap: anywhere;
+  font: 750 clamp(16px, 3.8vmin, 26px)/1.38 "Baloo 2", system-ui, sans-serif;
 }
+#caption.bubble-pastel .bubble-tail { border-top-color: #2d2035; }
+#caption.bubble-pastel .bubble-tail::after { border-top-color: #fff8f2; }
+#caption.bubble-pastel .bubble-page { background: #2d2035; color: #fff; border-color: #2d2035; }
 
-/* Comic / Pop-art Theme (Ảnh 1: Comic burst / Halftone pop) */
+/* Chủ đề Comic / Pop-art */
 #caption.bubble-comic .bubble-inner {
-  position: relative;
   background: #fffef0;
   border: 4px solid #141414;
   border-radius: 18px;
   padding: .62em 1.1em;
   box-shadow: 6px 6px 0px #ffd700, 8px 8px 0px #141414;
+  outline: none;
 }
-
 #caption.bubble-comic #caption-text {
   color: #121212;
   font: 800 clamp(16px, 3.9vmin, 27px)/1.32 "Bangers", "Impact", system-ui, sans-serif;
-  letter-spacing: 0.02em;
-  overflow-wrap: anywhere;
 }
+#caption.bubble-comic .bubble-tail { border-top-color: #141414; }
+#caption.bubble-comic .bubble-tail::after { border-top-color: #fffef0; }
+#caption.bubble-comic .bubble-page { background: #ffd700; color: #141414; border: 2px solid #141414; font-weight: 800; }
 
-/* Cloud Theme (Ảnh 2 & 3: Mây bồng bềnh) */
+/* Chủ đề Cloud / Mây */
 #caption.bubble-cloud .bubble-inner {
-  position: relative;
   background: #f4efff;
   border: 3.5px solid #362947;
   border-radius: 30px 30px 24px 24px;
@@ -71,16 +165,16 @@ canvas { display: block; width: min(100vw, 90.56vh); height: auto; }
   outline: 2px dashed rgba(180, 150, 225, 0.75);
   outline-offset: -6px;
 }
-
 #caption.bubble-cloud #caption-text {
   color: #27173e;
   font: 750 clamp(16px, 3.8vmin, 26px)/1.38 system-ui, sans-serif;
-  overflow-wrap: anywhere;
 }
+#caption.bubble-cloud .bubble-tail { border-top-color: #362947; }
+#caption.bubble-cloud .bubble-tail::after { border-top-color: #f4efff; }
+#caption.bubble-cloud .bubble-page { background: #362947; color: #fff; border-color: #362947; }
 
-/* Mint Theme */
+/* Chủ đề Mint */
 #caption.bubble-mint .bubble-inner {
-  position: relative;
   background: #f0faf4;
   border: 3.5px solid #1c3b2b;
   border-radius: 22px;
@@ -89,102 +183,39 @@ canvas { display: block; width: min(100vw, 90.56vh); height: auto; }
   outline: 2px dashed rgba(130, 200, 160, 0.8);
   outline-offset: -6px;
 }
-
 #caption.bubble-mint #caption-text {
   color: #1a3325;
   font: 750 clamp(16px, 3.8vmin, 26px)/1.38 system-ui, sans-serif;
-  overflow-wrap: anywhere;
 }
+#caption.bubble-mint .bubble-tail { border-top-color: #1c3b2b; }
+#caption.bubble-mint .bubble-tail::after { border-top-color: #f0faf4; }
+#caption.bubble-mint .bubble-page { background: #1c3b2b; color: #fff; border-color: #1c3b2b; }
 
-/* Speech Bubble Tail (Mũi tên thoại trỏ lên hướng Bông khi bubble ở dưới) */
-.bubble-tail {
-  position: absolute;
-  top: -13px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-bottom: 14px solid #2d2035;
-}
-
-.bubble-tail::after {
-  content: "";
-  position: absolute;
-  top: 4px;
-  left: -9px;
-  width: 0;
-  height: 0;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-bottom: 11px solid #fff8f2;
-}
-
-#caption.bubble-comic .bubble-tail {
-  border-bottom-color: #141414;
-}
-#caption.bubble-comic .bubble-tail::after {
-  border-bottom-color: #fffef0;
-}
-
-#caption.bubble-cloud .bubble-tail {
-  border-bottom-color: #362947;
-}
-#caption.bubble-cloud .bubble-tail::after {
-  border-bottom-color: #f4efff;
-}
-
-#caption.bubble-mint .bubble-tail {
-  border-bottom-color: #1c3b2b;
-}
-#caption.bubble-mint .bubble-tail::after {
-  border-bottom-color: #f0faf4;
-}
-
-/* Speech Bubble Tail khi bubble ở trên (pos=top) */
-#caption.pos-top {
-  bottom: auto;
-  top: 6%;
-}
-#caption.pos-top .bubble-tail {
+/* Tùy chọn đặt khung thoại ở dưới chân (khi pos=bottom) */
+#caption.pos-bottom {
   top: auto;
-  bottom: -13px;
-  border-top: 14px solid #2d2035;
-  border-bottom: none;
+  bottom: 5%;
 }
-#caption.pos-top .bubble-tail::after {
-  top: -15px;
-  border-top: 11px solid #fff8f2;
-  border-bottom: none;
+#caption.pos-bottom .bubble-tail {
+  top: -12px;
+  bottom: auto;
+  border-top: none;
+  border-bottom: 14px solid #000000;
 }
-#caption.pos-top.bubble-comic .bubble-tail {
-  border-top-color: #141414;
+#caption.pos-bottom .bubble-tail::after {
+  top: 2.5px;
+  border-top: none;
+  border-bottom: 11.5px solid #ffffff;
 }
-#caption.pos-top.bubble-comic .bubble-tail::after {
-  border-top-color: #fffef0;
-}
+#caption.pos-bottom.bubble-pastel .bubble-tail { border-bottom-color: #2d2035; }
+#caption.pos-bottom.bubble-pastel .bubble-tail::after { border-bottom-color: #fff8f2; }
+#caption.pos-bottom.bubble-comic .bubble-tail { border-bottom-color: #141414; }
+#caption.pos-bottom.bubble-comic .bubble-tail::after { border-bottom-color: #fffef0; }
+#caption.pos-bottom.bubble-cloud .bubble-tail { border-bottom-color: #362947; }
+#caption.pos-bottom.bubble-cloud .bubble-tail::after { border-bottom-color: #f4efff; }
+#caption.pos-bottom.bubble-mint .bubble-tail { border-bottom-color: #1c3b2b; }
+#caption.pos-bottom.bubble-mint .bubble-tail::after { border-bottom-color: #f0faf4; }
 
-/* Page indicator (1/3, 2/3) */
-.bubble-page {
-  position: absolute;
-  bottom: -11px;
-  right: 16px;
-  background: #2d2035;
-  color: #fff;
-  font: 750 11px/1.35 system-ui, sans-serif;
-  padding: 1.5px 8px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-  letter-spacing: 0.5px;
-}
-
-#caption.bubble-comic .bubble-page {
-  background: #ffd700;
-  color: #141414;
-  border: 2px solid #141414;
-  font-weight: 800;
-}
 #unlock {
   position: absolute;
   inset: auto auto 10px 10px;
@@ -195,7 +226,29 @@ canvas { display: block; width: min(100vw, 90.56vh); height: auto; }
   padding: 9px 13px;
   font: 700 16px system-ui, sans-serif;
   cursor: pointer;
+  z-index: 200;
 }
 
-#live-card { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 88%; box-sizing: border-box; padding: .55em .8em; border: 1px solid #ffccaa; border-radius: 10px; color: #fff4df; background: #281e2aeb; text-align: center; font: 650 clamp(16px, 3.65vmin, 35px)/1.4 system-ui, sans-serif; overflow-wrap: anywhere; }
-#live-card-tally { font-size: .83em; color: #ffd2b4; white-space: pre-line; }
+#live-card {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 88%;
+  box-sizing: border-box;
+  padding: .55em .8em;
+  border: 1px solid #ffccaa;
+  border-radius: 10px;
+  color: #fff4df;
+  background: #281e2aeb;
+  text-align: center;
+  font: 650 clamp(16px, 3.65vmin, 35px)/1.4 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+  z-index: 90;
+}
+#live-card-tally {
+  font-size: .83em;
+  color: #ffd2b4;
+  white-space: pre-line;
+}

@@ -7,13 +7,15 @@ const unlock = document.getElementById("unlock");
 const captionNode = document.getElementById("caption");
 const captionTextNode = document.getElementById("caption-text") || captionNode;
 const captionPageNode = document.getElementById("caption-page");
-const WORD_LIMIT = Math.max(4, Math.min(60, Number(parameters.get("words")) || 14));
-const bubbleStyle = parameters.get("bubble") || "pastel";
+const WORD_LIMIT = Math.max(4, Math.min(60, Number(parameters.get("words")) || 12));
+const bubbleStyle = parameters.get("bubble") || "manga";
 if (captionNode && bubbleStyle) captionNode.classList.add("bubble-" + bubbleStyle);
-if (captionNode && parameters.get("pos") === "top") captionNode.classList.add("pos-top");
+const pos = parameters.get("pos") || "top";
+if (captionNode && pos === "bottom") captionNode.classList.add("pos-bottom");
 let currentCaptionText = "";
+let currentCaptionPage = "";
 
-function splitCaption(text, limit = 14) {
+function splitCaption(text, limit = 12) {
   text = (text || "").trim();
   if (!text) return [];
   const words = text.split(/\s+/);
@@ -28,14 +30,14 @@ function splitCaption(text, limit = 14) {
     const isPunct = /[.!?:;,…]$/.test(w);
     const count = currentWords.length;
 
-    if (count >= limit || (count >= Math.max(6, limit - 4) && isPunct)) {
+    if (count >= limit || (count >= Math.max(5, limit - 4) && isPunct)) {
       frames.push(currentWords.join(" "));
       currentWords = [];
     }
   }
 
   if (currentWords.length > 0) {
-    if (frames.length > 0 && currentWords.length <= 4) {
+    if (frames.length > 0 && currentWords.length <= 3 && (frames[frames.length - 1].split(/\s+/).length + currentWords.length) <= limit) {
       frames[frames.length - 1] += " " + currentWords.join(" ");
     } else {
       frames.push(currentWords.join(" "));
@@ -129,6 +131,8 @@ function clearPlayback() {
   if (voice) voice.stop();
   captionNode.hidden = true;
   currentCaptionText = "";
+  currentCaptionPage = "";
+  if (captionPageNode) captionPageNode.hidden = true;
 }
 
 async function playJob(job) {
@@ -146,9 +150,11 @@ async function playJob(job) {
     captionTextNode.textContent = frames[idx];
     if (captionPageNode) {
       if (frames.length > 1) {
-        captionPageNode.textContent = `${idx + 1}/${frames.length}`;
+        currentCaptionPage = `${idx + 1}/${frames.length}`;
+        captionPageNode.textContent = currentCaptionPage;
         captionPageNode.hidden = false;
       } else {
+        currentCaptionPage = "";
         captionPageNode.hidden = true;
       }
     }
@@ -188,6 +194,8 @@ async function playJob(job) {
   speaking = false;
   captionNode.hidden = true;
   currentCaptionText = "";
+  currentCaptionPage = "";
+  if (captionPageNode) captionPageNode.hidden = true;
   ack = {id: job.id, failed};
 }
 
@@ -205,7 +213,7 @@ function visualSnapshot() {
     const track = voice.mouthTracks.find(part => time >= part.start && time < part.start + part.duration);
     return track ? Math.round(100 * Math.max(0, Math.min(1, track.levelAt(time - track.start)))) : 0;
   });
-  return {elapsed, duration, mouth, voiced: flower.voiceOn, silentTalk: flower.silentTalk, text: currentCaptionText || ""};
+  return {elapsed, duration, mouth, voiced: flower.voiceOn, silentTalk: flower.silentTalk, text: currentCaptionText || "", page: currentCaptionPage || ""};
 }
 
 function showMirror(visual) {
@@ -214,6 +222,9 @@ function showMirror(visual) {
     playing = null;
     flower.voiceOn = false;
     captionNode.hidden = true;
+    currentCaptionText = "";
+    currentCaptionPage = "";
+    if (captionPageNode) captionPageNode.hidden = true;
     return;
   }
   const now = performance.now();
@@ -230,6 +241,14 @@ function showMirror(visual) {
     return (visual.mouth[sample] ?? 0) / 100;
   };
   captionTextNode.textContent = visual.text || "";
+  if (captionPageNode) {
+    if (visual.page) {
+      captionPageNode.textContent = visual.page;
+      captionPageNode.hidden = false;
+    } else {
+      captionPageNode.hidden = true;
+    }
+  }
   captionNode.hidden = parameters.get("captions") !== "1" || !visual.text;
 }
 
