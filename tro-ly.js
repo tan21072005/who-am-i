@@ -250,7 +250,7 @@
   el("start-episode").onclick = () => void run("start", {episode: episode()});
   el("from").onclick = () => void run("start", {slot: index()});
   el("retell").onclick = () => void run("retell", {slot: index()});
-  el("prepare-chapter").onclick = () => void run("prepare", {slot: index(), chapter: true});
+  el("prepare-chapter").onclick = () => void run("prepare", {slot: index(), chapter: true, episode: episode()});
   el("library").onchange = () => {
     if (el("library").value) void run("open", {id: el("library").value});
   };

@@ -328,17 +328,46 @@ class Rundown:
             self.control("pause")
             self.audio_note = reason
 
+    @staticmethod
+    def clean_text(text):
+        clean = (text or "").strip()
+        m = re.match(r"^\[[A-Za-z0-9_\sÀ-ỹ]+\]\s*(.*)", clean, flags=re.DOTALL)
+        return m.group(1).strip() if m else clean
+
+    def audio_keys(self, text, speaker):
+        clean = self.clean_text(text)
+        keys = []
+        data = json.dumps([speaker.engine, speaker.voice, speaker.rate, VIE_VOICE, clean])
+        keys.append(sha256(data.encode()).digest())
+        if speaker.engine == "vieneu":
+            voices = {"Quỳnh Anh", "vi-VN-HoaiMyNeural"} if speaker.voice in ("Quỳnh Anh", "vi-VN-HoaiMyNeural") else {speaker.voice}
+            rates = {speaker.rate, 0, 4, 5}
+            for v in voices:
+                for r in rates:
+                    for vie in ("Thiện Minh", "Hải Đăng", "Quỳnh Anh", VIE_VOICE):
+                        d = json.dumps(["vieneu", v, r, vie, clean])
+                        k = sha256(d.encode()).digest()
+                        if k not in keys:
+                            keys.append(k)
+        if text != clean:
+            data_raw = json.dumps([speaker.engine, speaker.voice, speaker.rate, VIE_VOICE, text])
+            keys.append(sha256(data_raw.encode()).digest())
+        return keys
+
     def audio_file(self, slot, text, speaker):
-        data = json.dumps([speaker.engine, speaker.voice, speaker.rate, VIE_VOICE, text])
+        clean = self.clean_text(text)
+        data = json.dumps([speaker.engine, speaker.voice, speaker.rate, VIE_VOICE, clean])
         key = sha256(data.encode()).digest()
         folder = self.record_path().parent if self.script_id else self.directory
         return folder / "tro-ly-audio" / f"{slot + 1:02d}.clip", key
 
     def cached(self, slot, text, speaker):
-        path, key = self.audio_file(slot, text, speaker)
+        path, primary_key = self.audio_file(slot, text, speaker)
         try:
             with path.open("rb") as file:
-                if file.read(len(key)) != key:
+                file_key = file.read(len(primary_key))
+                all_keys = self.audio_keys(text, speaker)
+                if file_key not in all_keys:
                     return None
                 provider = file.readline(80).decode().strip()
                 audio = file.read(6_000_001)
@@ -349,7 +378,8 @@ class Rundown:
         return None
 
     def cache(self, slot, text, speaker, speech):
-        path, key = self.audio_file(slot, text, speaker)
+        clean = self.clean_text(text)
+        path, key = self.audio_file(slot, clean, speaker)
         write_atomic(path, key + speech.provider.encode() + b"\n" + speech.audio)
 
     def audio_key(self, speaker):
@@ -366,10 +396,12 @@ class Rundown:
             for slot, text in enumerate(self.plan["lines"]):
                 if not text:
                     continue
-                path, signature = self.audio_file(slot, text, speaker)
+                path, _ = self.audio_file(slot, text, speaker)
                 try:
                     with path.open("rb") as handle:
-                        if handle.read(len(signature)) != signature:
+                        file_key = handle.read(32)
+                        all_keys = self.audio_keys(text, speaker)
+                        if file_key not in all_keys:
                             continue
                         info = clip_info(handle, handle.readline(80).decode().strip())
                         if info:

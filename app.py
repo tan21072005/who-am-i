@@ -930,10 +930,19 @@ class Channel:
                 start = body.get("slot", 0)
                 if type(start) is not int or not 0 <= start < len(show.plan["lines"]):
                     raise InteractionError("Chọn vị trí tạo tiếng hợp lệ.")
-                end = next((chapter["slot"] for chapter in show.plan["chapters"] if chapter["slot"] > start),
-                           len(show.plan["lines"])) if body.get("chapter") is True else len(show.plan["lines"])
-                if episode is not None:
+                if body.get("chapter") is True:
+                    next_chapter = next((chapter["slot"] for chapter in show.plan["chapters"] if chapter["slot"] > start), None)
+                    if next_chapter is not None:
+                        end = next_chapter
+                    else:
+                        end = min(start + 30, len(show.plan["lines"]))
+                    if episode is not None:
+                        _, ep_end = show.episode_range(episode)
+                        end = min(end, ep_end)
+                elif episode is not None:
                     start, end = show.episode_range(episode)
+                else:
+                    end = len(show.plan["lines"])
                 show.preparing = True
                 show.audio_note = "Đang chuẩn bị âm thanh…"
                 slots = [(i, show.plan["lines"][i]) for i in range(start, end) if show.plan["lines"][i]]
@@ -1004,15 +1013,16 @@ class Channel:
         measured = 0
         note = "Chưa tạo xong âm thanh."
         try:
-            for index, (slot, text) in enumerate(slots, 1):
+            for index, (slot, raw_text) in enumerate(slots, 1):
+                clean_text = show.clean_text(raw_text)
                 with self.cv:
                     if speaker is not self.speaker:
                         raise SpeechError("Giọng đã đổi. Bấm Tạo tiếng trước để dùng giọng mới.")
                     show.audio_note = f"Đang chuẩn bị tiếng {index}/{len(slots)}…"
-                speech = show.cached(slot, text, speaker)
+                speech = show.cached(slot, clean_text, speaker)
                 fresh_clip = speech is None
                 if fresh_clip:
-                    speech = asyncio.run(speaker.synthesize(text))
+                    speech = asyncio.run(speaker.synthesize(clean_text))
                 providers.add(speech.provider)
                 clip_seconds = None
                 if speech.extension == "wav":
@@ -1024,7 +1034,7 @@ class Channel:
                     except (EOFError, wave.Error):
                         pass
                 if fresh_clip and (speaker.engine == "espeak" or speech.provider != "eSpeak NG"):
-                    show.cache(slot, text, speaker, speech)
+                    show.cache(slot, clean_text, speaker, speech)
                     with self.cv:
                         show.prepared(slot, speaker, clip_seconds)
             if "eSpeak NG" in providers and speaker.engine != "espeak":
