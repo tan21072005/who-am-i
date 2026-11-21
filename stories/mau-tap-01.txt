@@ -1,0 +1,5 @@
+bong [HAPPY]: Chào cả nhà vừa vào phòng live nha! Hôm nay có đủ bộ tứ tụi mình luôn!
+tho [WAVE]: Xin chào cả nhà! Ai vừa thả tim cho tụi mình thì bình luận để tụi mình đọc tên nhé!
+ho [ANGRY]: Ồn ào quá đi mấy đứa này, để cho Bông kể chuyện coi nào!
+rong [SCARED]: Anh Hổ đừng quạu mà, hôm nay chị Bông kể chuyện vui chứ không phải chuyện ma đâu!
+bong [LAUGH]: Đúng rồi, cả nhà sẵn sàng chưa, tụi mình bắt đầu ngay đây!

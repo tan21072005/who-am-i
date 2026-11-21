@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bông Hoa &amp; Hội Bạn Live — Overlay 3D (4 Nhân Vật)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    #stage-root {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Three.js WebGL Layer cho 3 nhân vật 3D (.glb) */
+    #three-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Canvas 2D cho Bé Gián Hoa (tái sử dụng nhan-vat.js hiện có ở Slot 0) */
+    #flower {
+      position: absolute;
+      left: 3%;
+      bottom: 2%;
+      width: 24vw;
+      max-width: 340px;
+      height: auto;
+      pointer-events: none;
+      transition: transform 0.3s ease, filter 0.3s ease;
+    }
+    #flower.speaking {
+      transform: scale(1.08) translateY(-6px);
+      filter: drop-shadow(0 0 18px rgba(255, 182, 193, 0.7));
+    }
+    /* Khung thoại kiểu Manga giống overlay.html gốc */
+    #bubble-manga {
+      position: absolute;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: min(760px, 88vw);
+      padding: 14px 22px;
+      border-radius: 20px;
+      border: 3px solid #111827;
+      background: #fff5f5;
+      color: #111827;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), 4px 4px 0 #111827;
+      opacity: 0;
+      transition: opacity 0.25s ease, background-color 0.25s ease;
+      pointer-events: none;
+      z-index: 30;
+    }
+    #bubble-manga.visible { opacity: 1; }
+    #bubble-speaker {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+    #bubble-text {
+      font-size: clamp(16px, 2.1vw, 24px);
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    #setup-banner {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      color: #a7f3d0;
+      font-size: 12px;
+      font-weight: 700;
+      z-index: 40;
+      display: none;
+    }
+  </style>
+  <!-- Import map cho Three.js ES Modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="stage-root">
+    <canvas id="three-canvas"></canvas>
+    <canvas id="flower" width="480" height="530"></canvas>
+
+    <div id="bubble-manga">
+      <div id="bubble-speaker">Bông Đào</div>
+      <div id="bubble-text"></div>
+    </div>
+
+    <div id="setup-banner">Nguồn âm thanh 4 nhân vật • 30 FPS</div>
+  </div>
+
+  <!-- Tái sử dụng nhan-vat.js hiện có của dự án who-am-i cho Bé Gián Hoa -->
+  <script src="/nhan-vat.js"></script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // =========================================================================
+    // 1. THAM SỐ URL GIỐNG overlay.html GỐC (?mirror=1&captions=1&setup=1)
+    // =========================================================================
+    const params = new URLSearchParams(window.location.search);
+    const IS_MIRROR = params.get('mirror') === '1';
+    const SHOW_CAPTIONS = params.get('captions') !== '0';
+    const IS_SETUP = params.get('setup') === '1';
+
+    if (IS_SETUP) {
+      document.getElementById('setup-banner').style.display = 'block';
+    }
+
+    // Khởi tạo Bé Gián Hoa (Canvas 2D sẵn có của who-am-i)
+    let flowerChar = null;
+    if (window.BongHoa && window.BongHoa.Flower) {
+      flowerChar = new window.BongHoa.Flower(document.getElementById('flower'), { palette: 'dao' });
+    }
+
+    // =========================================================================
+    // 2. CẤU HÌNH KHỚP CHÍNH XÁC TÊN FILE & TÊN CLIP TRONG 4 TỆP .GLB ĐÃ TỐI ƯU
+    // =========================================================================
+    const MODELS_CFG = {
+      rong: {
+        url: '/assets/models/rong/rong_optimized.glb',
+        x: -1.35,
+        y: -0.92,
+        scale: 0.92,
+        bubbleColor: '#E0F7F4',
+        clips: {
+          IDLE: 'Idle',
+          TALK: 'Idle',
+          WAVE: 'Big_Wave_Hello',
+          HAPPY: 'Happy_jump_f',
+          LAUGH: 'Happy_jump_f',
+          LOVE: 'Happy_jump_f',
+          ANGRY: 'Angry_Stomp',
+          ROAR: 'Angry_Stomp',
+          SCARED: 'Head_Hold_in_Pain',
+          SHOCK: 'Head_Hold_in_Pain',
+          SAD: 'Head_Hold_in_Pain',
+          FLY: 'Happy_jump_f',
+          ICE_BREATH: 'Angry_Stomp'
+        }
+      },
+      ho: {
+        url: '/assets/models/ho/ho_optimized.glb',
+        x: 0.35,
+        y: -0.92,
+        scale: 0.95,
+        bubbleColor: '#FFE8C2',
+        clips: {
+          IDLE: 'Idle',
+          TALK: 'Talk_Passionately',
+          WAVE: 'Big_Wave_Hello',
+          HAPPY: 'Victory_Cheer',
+          LAUGH: 'Victory_Cheer',
+          LOVE: 'Victory_Cheer',
+          ANGRY: 'Angry_Ground_Stomp',
+          SHOCK: 'Angry_Ground_Stomp',
+          THINK: 'Talk_Passionately'
+        }
+      },
+      tho: {
+        url: '/assets/models/tho/tho_optimized.glb',
+        x: 2.05,
+        y: -0.92,
+        scale: 0.92,
+        bubbleColor: '#FFF0D6',
+        clips: {
+          IDLE: 'Idle',
+          TALK: 'Talk_with_Hands_Open',
+          WAVE: 'Big_Wave_Hello',
+          HAPPY: 'Motivational_Cheer',
+          LAUGH: 'Motivational_Cheer',
+          LOVE: 'Motivational_Cheer',
+          SCARED: 'Confused_Scratch',
+          SHY: 'Confused_Scratch',
+          THINK: 'Confused_Scratch'
+        }
+      }
+    };
+
+    const CARROT_URL = '/assets/models/props/carrot_optimized.glb';
+    const BUBBLE_COLORS = { bong: '#FFE4E1', rong: '#E0F7F4', ho: '#FFE8C2', tho: '#FFF0D6' };
+
+    // =========================================================================
+    // 3. KHỞI TẠO THREE.JS SIÊU NHẸ GPU (TẮT SHADOW MAP NẶNG, GIỚI HẠN PIXEL RATIO)
+    // =========================================================================
+    const canvas = document.getElementById('three-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 50);
+    camera.position.set(0, 0.2, 6.2);
+
+    // Ánh sáng studio dịu nhẹ (0 tốn shadow map)
+    scene.add(new THREE.AmbientLight(0xffffff, 1.35));
+    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.4);
+    keyLight.position.set(2.5, 4.5, 5);
+    scene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0x99f6e4, 0.7);
+    rimLight.position.set(-3, 2, -3);
+    scene.add(rimLight);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // =========================================================================
+    // 4. NẠP 3 MODEL .GLB & TỰ GẮN CARROT.GLB VÀO KHỚP 'RightHand' CỦA THỎ
+    // =========================================================================
+    const loader = new GLTFLoader();
+    const actors = {}; // id -> { root, mixer, actions, currentAction, baseScale, baseY, isSpeaking, emotion }
+
+    function playClip(id, emotion) {
+      const actor = actors[id];
+      if (!actor) return;
+      actor.emotion = emotion;
+      const cfg = MODELS_CFG[id];
+      const clipName = cfg.clips[emotion] || cfg.clips.IDLE || 'Idle';
+      const nextAction = actor.actions[clipName] || Object.values(actor.actions)[0];
+      if (!nextAction || actor.currentAction === nextAction) return;
+      if (actor.currentAction) {
+        actor.currentAction.fadeOut(0.25);
+      }
+      nextAction.reset().fadeIn(0.25).play();
+      actor.currentAction = nextAction;
+    }
+
+    async function loadAllModels() {
+      for (const [id, cfg] of Object.entries(MODELS_CFG)) {
+        try {
+          const gltf = await loader.loadAsync(cfg.url);
+          const root = gltf.scene;
+          root.position.set(cfg.x, cfg.y, 0);
+          root.scale.setScalar(cfg.scale);
+          scene.add(root);
+
+          const mixer = new THREE.AnimationMixer(root);
+          const actions = {};
+          for (const clip of gltf.animations) {
+            actions[clip.name] = mixer.clipAction(clip);
+          }
+
+          actors[id] = {
+            root,
+            mixer,
+            actions,
+            currentAction: null,
+            baseScale: cfg.scale,
+            baseY: cfg.y,
+            isSpeaking: false,
+            emotion: 'IDLE'
+          };
+          playClip(id, 'IDLE');
+
+          // Tự động gắn củ cà rốt vào đúng xương 'RightHand' của Thỏ Cà Rốt
+          if (id === 'tho') {
+            const rightHand = root.getObjectByName('RightHand');
+            if (rightHand) {
+              try {
+                const carrotGltf = await loader.loadAsync(CARROT_URL);
+                const carrot = carrotGltf.scene;
+                carrot.scale.setScalar(0.45);
+                carrot.position.set(0.06, 0.08, 0.04);
+                carrot.rotation.set(0.2, 0, -0.35);
+                rightHand.add(carrot);
+              } catch (err) {
+                console.warn('Chưa tải được carrot_optimized.glb:', err);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Chưa tải được model ${id} (${cfg.url}):`, err);
+        }
+      }
+    }
+
+    // =========================================================================
+    // 5. ĐỒNG BỘ SỰ KIỆN TỪ live_director_bridge.py (app.py) & PHÁT ÂM THANH
+    // =========================================================================
+    let targetFps = 30;
+    let isPlayingTurn = false;
+    let lastEventSeq = 0;
+    const audioPlayer = new Audio();
+
+    function showBubble(speakerId, speakerName, text) {
+      const box = document.getElementById('bubble-manga');
+      if (!SHOW_CAPTIONS || !text) {
+        box.classList.remove('visible');
+        return;
+      }
+      box.style.backgroundColor = BUBBLE_COLORS[speakerId] || '#ffffff';
+      document.getElementById('bubble-speaker').textContent = speakerName || speakerId;
+      document.getElementById('bubble-text').textContent = text;
+      box.classList.add('visible');
+    }
+
+    function setSpeakingState(speakerId, emotion, reactions = {}) {
+      // Bé Gián Hoa
+      const flowerEl = document.getElementById('flower');
+      flowerEl.classList.toggle('speaking', speakerId === 'bong');
+      if (flowerChar && typeof flowerChar.setAction === 'function') {
+        if (speakerId === 'bong') flowerChar.setAction(emotion || 'TALK');
+        else if (reactions.bong) flowerChar.setAction(reactions.bong);
+        else flowerChar.setAction('IDLE');
+      }
+
+      // 3 nhân vật 3D
+      for (const [id, actor] of Object.entries(actors)) {
+        actor.isSpeaking = id === speakerId;
+        if (id === speakerId) {
+          playClip(id, emotion || 'TALK');
+        } else if (reactions[id]) {
+          playClip(id, reactions[id]);
+        } else {
+          playClip(id, 'IDLE');
+        }
+      }
+    }
+
+    async function pollNextTurn() {
+      if (isPlayingTurn) return;
+      try {
+        // Đồng bộ FPS & bật/tắt nhân vật từ Bàn điều khiển
+        const stRes = await fetch('/api/multi_state', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Bong-Hoa': '1' }, body: '{}' });
+        if (stRes.ok) {
+          const st = await stRes.json();
+          if (st.stage && st.stage.fps) targetFps = st.stage.fps;
+          (st.characters || []).forEach(c => {
+            if (c.id === 'bong') {
+              document.getElementById('flower').style.display = c.enabled ? 'block' : 'none';
+            } else if (actors[c.id]) {
+              actors[c.id].root.visible = Boolean(c.enabled);
+            }
+          });
+          // Cửa sổ mirror=1 chỉ đọc latest_event để đồng bộ hình + phụ đề, không lấy trùng hàng đợi
+          if (IS_MIRROR) {
+            const ev = st.pipeline && st.pipeline.latest_event;
+            if (ev && ev.event_seq !== lastEventSeq) {
+              lastEventSeq = ev.event_seq;
+              setSpeakingState(ev.speaker, ev.emotion, ev.reactions || {});
+              showBubble(ev.speaker, ev.speaker_name, ev.text);
+            }
+            return;
+          }
+        }
+
+        // Cửa sổ chính (không có mirror=1) lấy lượt thoại tiếp theo & phát âm thanh
+        const res = await fetch('/api/multi_next_playback', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Bong-Hoa': '1' }, body: '{}' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const ev = data.event;
+        if (!ev) return;
+
+        isPlayingTurn = true;
+        setSpeakingState(ev.speaker, ev.emotion, ev.reactions || {});
+        showBubble(ev.speaker, ev.speaker_name, ev.text);
+
+        if (ev.audio_url) {
+          audioPlayer.src = ev.audio_url;
+          await new Promise(resolve => {
+            audioPlayer.onended = resolve;
+            audioPlayer.onerror = resolve;
+            audioPlayer.play().catch(resolve);
+          });
+        } else {
+          await new Promise(r => setTimeout(r, Math.max(1800, (ev.text || '').length * 55)));
+        }
+
+        await new Promise(r => setTimeout(r, ev.pause_ms || 300));
+        setSpeakingState(null, 'IDLE', {});
+        showBubble(null, '', '');
+        isPlayingTurn = false;
+      } catch (_err) {
+        isPlayingTurn = false;
+      }
+    }
+
+    setInterval(pollNextTurn, 500);
+
+    // =========================================================================
+    // 6. VÒNG LẶP RENDER CÓ GIỚI HẠN FPS TÙY CHỈNH (24 / 30 / 60 FPS)
+    // =========================================================================
+    const clock = new THREE.Clock();
+    let lastRender = 0;
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      if (now - lastRender < (1000 / targetFps) - 1.5) return;
+      lastRender = now;
+
+      const delta = Math.min(clock.getDelta(), 0.1);
+      const elapsed = clock.elapsedTime;
+
+      for (const [id, actor] of Object.entries(actors)) {
+        actor.mixer.update(delta);
+
+        // Hiệu ứng spotlight phóng to nhẹ người đang nói
+        const desiredScale = actor.baseScale * (actor.isSpeaking ? 1.09 : 1.0);
+        actor.root.scale.lerp(new THREE.Vector3(desiredScale, desiredScale, desiredScale), 0.14);
+
+        // Hiệu ứng bay lơ lửng cho Bé Rồng khi emotion === 'FLY'
+        const flyOffset = (id === 'rong' && actor.emotion === 'FLY') ? (0.45 + Math.sin(elapsed * 4.2) * 0.12) : 0;
+        const desiredY = actor.baseY + flyOffset;
+        actor.root.position.y += (desiredY - actor.root.position.y) * 0.12;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    loadAllModels();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

@@ -1,0 +1,376 @@
+{
+  "schema_version": "2.0-multi-cast",
+  "name": "Bông Hoa & Hội Bạn Live",
+  "port": 8765,
+  "tiktok_username": "wh0_am_i2342",
+  "llm_provider": "9router",
+  "router_model": "live-tiktok",
+  "gemini_model": "gemini-3.5-flash-lite",
+  "stage": {
+    "width": 1280,
+    "height": 420,
+    "focus_scale": 1.08,
+    "idle_dim_alpha": 0.86,
+    "bubble_word_limit": 12,
+    "background": "transparent"
+  },
+  "director": {
+    "max_turns_comment": 3,
+    "max_turns_topic": 5,
+    "max_turns_idle": 3,
+    "max_words_per_turn": 28,
+    "history_window": 10,
+    "comment_batch_seconds": 4,
+    "prefetch_ahead_turns": 2,
+    "interrupt_policy": "finish_current_line",
+    "default_lead_id": "bong"
+  },
+  "characters": [
+    {
+      "id": "bong",
+      "name": "Bông Đào",
+      "short_name": "Bông",
+      "aliases": [
+        "bong",
+        "bông",
+        "gián",
+        "gian",
+        "hoa",
+        "bông đào",
+        "!bong",
+        "@bong"
+      ],
+      "role": "Người dẫn chuyện chính, giữ nhịp phòng live và kết nối mọi người",
+      "enabled": true,
+      "renderer": {
+        "type": "canvas_flower",
+        "palette": "dao",
+        "active_skin": "nang",
+        "skins": {
+          "dao": {
+            "label": "Hoa Đào",
+            "palette": "dao"
+          },
+          "nang": {
+            "label": "Hoa Nắng",
+            "palette": "nang"
+          },
+          "tim": {
+            "label": "Hoa Tím",
+            "palette": "tim"
+          },
+          "xanh": {
+            "label": "Hoa Xanh",
+            "palette": "xanh"
+          }
+        }
+      },
+      "stage": {
+        "slot_index": 0,
+        "x_ratio": 0.14,
+        "y_ratio": 0.82,
+        "scale": 0.92,
+        "flip_x": false,
+        "bubble_color": "#FFE4E1"
+      },
+      "voice": {
+        "engine": "vieneu",
+        "voice_name": "Ngọc Linh",
+        "speed": 1.0,
+        "fallback_edge_voice": "vi-VN-HoaiMyNeural"
+      },
+      "persona": {
+        "pronoun_self": "Bông",
+        "pronoun_audience": "mọi người / bạn",
+        "traits": [
+          "gần gũi",
+          "dịu dàng",
+          "khéo dẫn chuyện",
+          "hay xoa dịu lúc cả nhóm cãi nhau"
+        ],
+        "speaking_style": "Tự nhiên, ấm áp, câu ngắn vừa phải, hay mở đầu chủ đề hoặc tóm ý sau khi cả nhóm bàn luận.",
+        "relationships": {
+          "rong": "Chiều chuộng như em út, hay giải thích nhẹ nhàng cho Rồng.",
+          "ho": "Hay trêu nhẹ tính cọc của Hổ nhưng vẫn nể Hổ.",
+          "tho": "Cùng Thỏ khuấy động phòng live và đón khách."
+        },
+        "catchphrases": [
+          "Để Bông kể tiếp đoạn này nha",
+          "Bình tĩnh nào anh Hổ ơi"
+        ]
+      },
+      "default_emotion": "IDLE",
+      "preferred_emotions": [
+        "HAPPY",
+        "WAVE",
+        "LOVE",
+        "LAUGH",
+        "THINK"
+      ]
+    },
+    {
+      "id": "rong",
+      "name": "Bé Rồng Ngọc",
+      "short_name": "Rồng",
+      "aliases": [
+        "rong",
+        "rồng",
+        "bé rồng",
+        "rồng ngọc",
+        "dragon",
+        "!rong",
+        "@rong"
+      ],
+      "role": "Em út ngây ngô, tò mò, thích chuyện cổ tích và hay hỏi câu bất ngờ",
+      "enabled": true,
+      "renderer": {
+        "type": "sprite",
+        "active_skin": "default",
+        "skins": {
+          "default": {
+            "label": "Rồng Ngọc Gốc",
+            "dir": "assets/characters/rong/default",
+            "frames": {
+              "IDLE": "idle.png",
+              "TALK_OPEN": "talk_open.png",
+              "TALK_CLOSED": "talk_closed.png",
+              "HAPPY": "happy.png",
+              "LAUGH": "laugh.png",
+              "SHOCK": "shock.png",
+              "SCARED": "scared.png",
+              "THINK": "think.png",
+              "LOVE": "love.png"
+            }
+          },
+          "tet": {
+            "label": "Rồng Áo Dài Tết",
+            "dir": "assets/characters/rong/tet",
+            "frames": {
+              "IDLE": "idle.png",
+              "TALK_OPEN": "talk_open.png",
+              "TALK_CLOSED": "talk_closed.png"
+            }
+          }
+        }
+      },
+      "stage": {
+        "slot_index": 1,
+        "x_ratio": 0.38,
+        "y_ratio": 0.8,
+        "scale": 0.95,
+        "flip_x": false,
+        "bubble_color": "#E0F7F4"
+      },
+      "voice": {
+        "engine": "vieneu",
+        "voice_name": "Quỳnh Anh",
+        "speed": 1.03,
+        "fallback_edge_voice": "vi-VN-HoaiMyNeural"
+      },
+      "persona": {
+        "pronoun_self": "Rồng",
+        "pronoun_audience": "mấy anh chị / bạn",
+        "traits": [
+          "ngây thơ",
+          "mộng mơ",
+          "hay đặt câu hỏi vì sao",
+          "dễ giật mình nhưng ham nghe chuyện"
+        ],
+        "speaking_style": "Trong trẻo, giàu trí tưởng tượng, hay thốt lên cảm thán ngắn và kéo dài câu hỏi tò mò.",
+        "relationships": {
+          "bong": "Tin tưởng Bông nhất, hay nhờ Bông kể chuyện.",
+          "ho": "Hơi sợ lúc anh Hổ gắt nhưng biết anh Hổ thương mình.",
+          "tho": "Cạ cứng chơi đùa cùng Thỏ, hay bị Thỏ rủ rê."
+        },
+        "catchphrases": [
+          "Ủa thật luôn hả?",
+          "Anh Hổ đừng dọa Rồng nữa mà!"
+        ]
+      },
+      "default_emotion": "IDLE",
+      "preferred_emotions": [
+        "SHOCK",
+        "SCARED",
+        "THINK",
+        "HAPPY",
+        "SHY",
+        "FLY"
+      ]
+    },
+    {
+      "id": "ho",
+      "name": "Hổ Mập",
+      "short_name": "Hổ",
+      "aliases": [
+        "ho",
+        "hổ",
+        "hổ mập",
+        "anh hổ",
+        "cọp",
+        "tiger",
+        "!ho",
+        "@ho"
+      ],
+      "role": "Anh đại cục súc nhẹ (tsundere), hay phản biện, cà khịa hài hước và chốt câu thực tế",
+      "enabled": true,
+      "renderer": {
+        "type": "sprite",
+        "active_skin": "default",
+        "skins": {
+          "default": {
+            "label": "Hổ Mập Khoanh Tay",
+            "dir": "assets/characters/ho/default",
+            "frames": {
+              "IDLE": "idle.png",
+              "TALK_OPEN": "talk_open.png",
+              "TALK_CLOSED": "talk_closed.png",
+              "ANGRY": "angry.png",
+              "LAUGH": "laugh.png",
+              "THINK": "think.png",
+              "SHOCK": "shock.png",
+              "TIRED": "tired.png"
+            }
+          },
+          "glasses": {
+            "label": "Hổ Đeo Kính Ngầu",
+            "dir": "assets/characters/ho/glasses",
+            "frames": {
+              "IDLE": "idle.png",
+              "TALK_OPEN": "talk_open.png",
+              "TALK_CLOSED": "talk_closed.png"
+            }
+          }
+        }
+      },
+      "stage": {
+        "slot_index": 2,
+        "x_ratio": 0.62,
+        "y_ratio": 0.84,
+        "scale": 1.0,
+        "flip_x": false,
+        "bubble_color": "#FFE8C2"
+      },
+      "voice": {
+        "engine": "vieneu",
+        "voice_name": "Thái Sơn",
+        "speed": 0.96,
+        "fallback_edge_voice": "vi-VN-NamMinhNeural"
+      },
+      "persona": {
+        "pronoun_self": "tui / anh Hổ",
+        "pronoun_audience": "mấy ông / bạn",
+        "traits": [
+          "thẳng tính",
+          "cọc hài hước",
+          "thực tế",
+          "ngoài lạnh trong ấm"
+        ],
+        "speaking_style": "Gọn gàng, dứt khoát, hay mở đầu bằng câu phản biện hoặc thở dài kiểu bất lực nhưng không xúc phạm khán giả.",
+        "relationships": {
+          "bong": "Nghe lời Bông khi bị nhắc nhẹ.",
+          "rong": "Hay dọa Rồng cho vui rồi lại dỗ.",
+          "tho": "Suốt ngày đấu khẩu hài hước với Thỏ."
+        },
+        "catchphrases": [
+          "Nghe vô lý hết sức!",
+          "Thôi được rồi, nể khán giả đó nha"
+        ]
+      },
+      "default_emotion": "IDLE",
+      "preferred_emotions": [
+        "ANGRY",
+        "THINK",
+        "TIRED",
+        "LAUGH",
+        "POINT"
+      ]
+    },
+    {
+      "id": "tho",
+      "name": "Thỏ Cà Rốt",
+      "short_name": "Thỏ",
+      "aliases": [
+        "tho",
+        "thỏ",
+        "thỏ trắng",
+        "thỏ cà rốt",
+        "bunny",
+        "!tho",
+        "@tho"
+      ],
+      "role": "Cây hài năng động, chuyên bắt trend, đọc comment nhiệt tình và chọc Hổ Mập",
+      "enabled": true,
+      "renderer": {
+        "type": "sprite",
+        "active_skin": "default",
+        "skins": {
+          "default": {
+            "label": "Thỏ Ôm Cà Rốt",
+            "dir": "assets/characters/tho/default",
+            "frames": {
+              "IDLE": "idle.png",
+              "TALK_OPEN": "talk_open.png",
+              "TALK_CLOSED": "talk_closed.png",
+              "HAPPY": "happy.png",
+              "LAUGH": "laugh.png",
+              "WAVE": "wave.png",
+              "LOVE": "love.png",
+              "SHOCK": "shock.png"
+            }
+          },
+          "hat": {
+            "label": "Thỏ Đội Mũ",
+            "dir": "assets/characters/tho/hat",
+            "frames": {
+              "IDLE": "idle.png",
+              "TALK_OPEN": "talk_open.png",
+              "TALK_CLOSED": "talk_closed.png"
+            }
+          }
+        }
+      },
+      "stage": {
+        "slot_index": 3,
+        "x_ratio": 0.86,
+        "y_ratio": 0.82,
+        "scale": 0.94,
+        "flip_x": false,
+        "bubble_color": "#FFF0D6"
+      },
+      "voice": {
+        "engine": "vieneu",
+        "voice_name": "Mỹ Duyên",
+        "speed": 1.06,
+        "fallback_edge_voice": "vi-VN-HoaiMyNeural"
+      },
+      "persona": {
+        "pronoun_self": "Thỏ",
+        "pronoun_audience": "cả nhà / bạn ơi",
+        "traits": [
+          "lém lỉnh",
+          "nhanh nhảu",
+          "hài hước",
+          "thích đồ ăn và cà rốt"
+        ],
+        "speaking_style": "Sôi nổi, nhịp nhanh, hay cảm ơn quà tặng, gọi tên khán giả và tung miếng cho các nhân vật khác.",
+        "relationships": {
+          "bong": "Hay hùa theo Bông khi kể chuyện.",
+          "rong": "Rất thích bày trò cùng Bé Rồng.",
+          "ho": "Chuyên trêu Hổ Mập là béo hoặc khó tính."
+        },
+        "catchphrases": [
+          "Cả nhà thả tim tiếp đi nào!",
+          "Anh Hổ lại gắt nữa rồi kìa"
+        ]
+      },
+      "default_emotion": "IDLE",
+      "preferred_emotions": [
+        "HAPPY",
+        "LAUGH",
+        "WAVE",
+        "LOVE",
+        "LIKE"
+      ]
+    }
+  ]
+}

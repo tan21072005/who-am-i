@@ -21,7 +21,7 @@ import unicodedata
 import webbrowser
 import wave
 from urllib.error import HTTPError
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 from urllib.request import Request, urlopen
 
 from kho_tai_lieu import DocumentStore
@@ -34,6 +34,17 @@ from thiet_lap import OperatorError, OperatorSettings
 from tuong_tac import MAX_REPLY_TEXT, MUSIC_LIMIT, PREFERENCES, REPLY_LENGTHS, Interaction, InteractionError, normalized
 
 ROOT = Path(__file__).resolve().parent
+
+try:
+    from audio_pipeline import MultiCharacterAudioPipeline
+    from live_director_bridge import LiveDirectorBridge
+    _multi_profile = ROOT / "profiles" / "kenh-1-multi.json"
+    multi_pipeline = MultiCharacterAudioPipeline(cache_dir=ROOT / "sound-data" / "multi-cache") if _multi_profile.exists() else None
+    multi_bridge = LiveDirectorBridge(profile_path=_multi_profile, pipeline=multi_pipeline) if _multi_profile.exists() else None
+except Exception as _e:
+    print(f"Lưu ý: Chưa khởi tạo được MultiCharacter bridge · {_e}", file=sys.stderr)
+    multi_pipeline = None
+    multi_bridge = None
 ACTIONS = (
     "IDLE", "TALK", "WAVE", "LAUGH", "THINK", "SHOCK", "LOVE", "SHY",
     "ANGRY", "SAD", "LIKE", "BOW", "TIRED", "POINT", "SCARED", "HAPPY", "WINGS", "FLY",
@@ -134,6 +145,7 @@ def extract_gesture(text, slot=0, total=30, auto_ai=True):
 STATIC = {
     "bang-dieu-khien.html", "THU-NHAN-VAT.html", "overlay.html", "overlay.css",
     "tro-ly.js", "kho-tai-lieu.js", "giao-dien.css", "cai-dat.js", "hieu-ung-data.js", "hieu-ung.js", "nhan-vat.js", "ket-noi.js", "thu.js", "overlay.js", "dieu-khien.js", "tuong-tac.js", "thiet-lap.js",
+    "overlay-3d.html", "nhan-vat-4be.js",
 }
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 GOOGLE_MODELS = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -1484,6 +1496,11 @@ class Channel:
                 async def on_comment(event):
                     identity, display = viewer(event)
                     self.submit_comment(display, event.comment, identity or None, from_tiktok=True)
+                    if multi_bridge:
+                        try:
+                            multi_bridge.on_tiktok_comment(viewer_name=display, comment_text=event.comment)
+                        except Exception:
+                            pass
 
                 def receive_audience(kind, event):
                     identity, display = viewer(event)
@@ -1513,11 +1530,17 @@ class Channel:
                     gift = getattr(event, "gift", None)
                     if not gift or getattr(event, "streaking", False):
                         return
-                    sender, _display = viewer(event)
+                    sender, display = viewer(event)
                     common = getattr(event, "common", None)
                     event_id = getattr(event, "order_id", None) or getattr(common, "msg_id", None)
+                    gift_name = getattr(gift, "name", "")
                     self.submit_gift(sender, getattr(event, "gift_id", None) or getattr(gift, "id", ""),
-                                     getattr(gift, "name", ""), event_id)
+                                     gift_name, event_id)
+                    if multi_bridge:
+                        try:
+                            multi_bridge.on_tiktok_comment(viewer_name=display, comment_text=f"Vừa tặng {gift_name}!", gift_name=gift_name)
+                        except Exception:
+                            pass
 
                 self.tiktok_state = "Đang kết nối @" + username
                 task = await client.start()
@@ -1562,7 +1585,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("X-Frame-Options", "DENY")
             self.send_header("Referrer-Policy", "no-referrer")
-            self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; media-src 'self'; base-uri 'none'; frame-ancestors 'none'")
+            csp = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: data:; base-uri 'none'; frame-ancestors 'none'"
+            self.send_header("Content-Security-Policy", csp)
             self.end_headers()
             self.wfile.write(data)
         except (BrokenPipeError, ConnectionResetError, TimeoutError):
@@ -1579,6 +1603,43 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(403, {"error": "Mở bằng địa chỉ 127.0.0.1 in trong cửa sổ chạy."})
             return
         name = urlsplit(self.path).path.removeprefix("/") or "bang-dieu-khien.html"
+        if name.startswith("api/multi/audio"):
+            query = parse_qs(urlsplit(self.path).query)
+            filename = Path(query.get("file", [""])[0]).name
+            if filename:
+                for base_dir in [ROOT / "sound-data" / "multi-cache", ROOT / "sound-data" / "episodes"]:
+                    cand = base_dir / filename
+                    if cand.is_file():
+                        self.send_payload(200, "audio/wav", cand.read_bytes())
+                        return
+                    if base_dir.is_dir():
+                        for sub in base_dir.rglob(filename):
+                            if sub.is_file():
+                                self.send_payload(200, "audio/wav", sub.read_bytes())
+                                return
+            self.reply(404, {"error": "Không tìm thấy file âm thanh."})
+            return
+        if name.startswith("assets/"):
+            asset_path = (ROOT / name).resolve()
+            try:
+                if asset_path.is_file() and (ROOT / "assets") in asset_path.parents:
+                    ext = asset_path.suffix.lower()
+                    mime = {
+                        ".glb": "model/gltf-binary",
+                        ".gltf": "model/gltf+json",
+                        ".bin": "application/octet-stream",
+                        ".png": "image/png",
+                        ".jpg": "image/jpeg",
+                        ".jpeg": "image/jpeg",
+                        ".wav": "audio/wav",
+                        ".mp3": "audio/mpeg"
+                    }.get(ext, "application/octet-stream")
+                    self.send_payload(200, mime, asset_path.read_bytes())
+                    return
+            except Exception:
+                pass
+            self.reply(404, {"error": "Không tìm thấy tệp tài nguyên."})
+            return
         if name in ("music/A", "music/B"):
             path = self.server.channel.live.track_path(name[-1])
             try:
@@ -1609,12 +1670,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_payload(200, f"{content_type}; charset=utf-8", (ROOT / name).read_bytes())
 
     def do_POST(self):
+        endpoint = urlsplit(self.path).path
+        operation = endpoint.removeprefix("/api/")
+        is_multi = operation.startswith("multi_")
         if (not self.local_host() or self.headers.get("Origin") not in (None, self.server.origin)
-                or self.headers.get("X-Bong-Hoa") != "1"):
+                or (self.headers.get("X-Bong-Hoa") != "1" and not is_multi)):
             self.reply(403, {"error": "Chỉ nhận lệnh từ bảng điều khiển trên máy này."})
             return
         try:
-            endpoint = urlsplit(self.path).path
             size = int(self.headers.get("Content-Length", "0"))
             media = self.headers.get_content_type()
             channel = self.server.channel
@@ -1626,6 +1689,16 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if media != "application/json":
                 raise ValueError("media")
+            if is_multi:
+                body = json.loads(self.rfile.read(size)) if size > 0 else {}
+                if not isinstance(body, dict):
+                    raise ValueError("object")
+                if multi_bridge:
+                    out = multi_bridge.handle_api(operation, body)
+                    self.reply(200, out)
+                else:
+                    self.reply(503, {"ok": False, "error": "MultiCharacter bridge chưa khởi tạo."})
+                return
             limits = {"/api/assistant": MAX_DOCUMENT + 3_000_000, "/api/preferences": AUDIO_LIMIT, "/api/interactions": MUSIC_LIMIT, "/api/operator": AUDIO_LIMIT}
             limit = (limits.get(endpoint, 0) + 2) // 3 * 4 + 4096
             if not 2 <= size <= limit:
@@ -1757,6 +1830,17 @@ def main():
     except (ValueError, OSError, EOFError, CommandError, SpeechError, RouterError) as error:
         print(f"Không mở được Bông Hoa · {error}", file=sys.stderr)
         return 1
+    finally:
+        if multi_bridge:
+            try:
+                multi_bridge.shutdown()
+            except Exception:
+                pass
+        if multi_pipeline:
+            try:
+                multi_pipeline.shutdown()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
