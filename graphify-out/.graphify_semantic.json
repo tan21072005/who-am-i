@@ -1,0 +1,209 @@
+{
+  "nodes": [
+    {
+      "id": "readme_bong_hoa_live",
+      "label": "Bông Hoa Live Overview",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_16_emotional_gestures",
+      "label": "16 Emotional Gestures & Auto Actions",
+      "file_type": "document",
+      "source_file": "HUONG-DAN-BIEU-CAM-GIONG-DOC.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_storytelling_reader",
+      "label": "Storytelling & Document Reader Flow",
+      "file_type": "document",
+      "source_file": "HUONG-DAN-KE-TRUYEN.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_9router_studio_mirror",
+      "label": "9Router & Studio Mirror Mode (mirror=1)",
+      "file_type": "document",
+      "source_file": "9ROUTER-LIVE-STUDIO.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_vieneu_cuda_audio",
+      "label": "VieNeu CUDA & TTS Audio Architecture",
+      "file_type": "document",
+      "source_file": "KET-NOI-VA-GIONG-NOI.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_tiktok_live_interaction",
+      "label": "TikTok Live Chat & Gift Interaction",
+      "file_type": "document",
+      "source_file": "TUONG-TAC-LIVE.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_ai_prompt_directives",
+      "label": "AI System Prompts & Safety Directives",
+      "file_type": "document",
+      "source_file": "PROMPT-AI-A-Z.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_obs_overlay_manga_bubble",
+      "label": "OBS Overlay & Doraemon Manga Bubble",
+      "file_type": "document",
+      "source_file": "overlay.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "doc_dashboard_control",
+      "label": "Dashboard Control Center",
+      "file_type": "document",
+      "source_file": "bang-dieu-khien.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "doc_16_emotional_gestures",
+      "target": "app_extract_gesture",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "HUONG-DAN-BIEU-CAM-GIONG-DOC.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_storytelling_reader",
+      "target": "app_is_story_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "HUONG-DAN-KE-TRUYEN.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_9router_studio_mirror",
+      "target": "app_channel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "9ROUTER-LIVE-STUDIO.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_obs_overlay_manga_bubble",
+      "target": "app",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "overlay.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_bong_hoa_live",
+      "target": "app",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_vieneu_cuda_audio",
+      "target": "app_channel",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "KET-NOI-VA-GIONG-NOI.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_tiktok_live_interaction",
+      "target": "app_channel",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "TUONG-TAC-LIVE.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_ai_prompt_directives",
+      "target": "app_generate_reply",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "PROMPT-AI-A-Z.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_dashboard_control",
+      "target": "app",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "bang-dieu-khien.html",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "README.md": 150,
+    "HUONG-DAN-BIEU-CAM-GIONG-DOC.txt": 85,
+    "HUONG-DAN-KE-TRUYEN.txt": 120,
+    "9ROUTER-LIVE-STUDIO.txt": 95,
+    "KET-NOI-VA-GIONG-NOI.txt": 110,
+    "TUONG-TAC-LIVE.txt": 75,
+    "PROMPT-AI-A-Z.txt": 220,
+    "overlay.html": 31,
+    "bang-dieu-khien.html": 180
+  }
+}
