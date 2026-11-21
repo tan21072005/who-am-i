@@ -11,7 +11,11 @@ import subprocess
 from tempfile import TemporaryDirectory
 import wave
 
-VIE_VOICE = "Hải Đăng"
+VIE_VOICES = {
+    "Thiện Minh", "Quỳnh Anh", "Mỹ Duyên", "Thái Sơn", "Hải Đăng", "Trúc Ly", "Ngọc Linh", "Thiền Tâm Đức", "Kim Thanh", "Đức Trí"
+}
+VIE_DEFAULT = "Thiện Minh"
+VIE_VOICE = VIE_DEFAULT
 _vieneu_lock = Lock()
 _vieneu_model = None
 MAX_AUDIO = 1_500_000
@@ -66,7 +70,10 @@ class Speaker:
         import edge_tts
 
         audio = bytearray()
-        async for chunk in edge_tts.Communicate(text, self.voice, rate=f"{self.rate:+d}%").stream():
+        edge_voice = self.voice
+        if edge_voice not in ("vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural"):
+            edge_voice = "vi-VN-HoaiMyNeural" if self.voice in ("Quỳnh Anh", "Mỹ Duyên", "Ngọc Linh", "Kim Thanh", "Trúc Ly") else "vi-VN-NamMinhNeural"
+        async for chunk in edge_tts.Communicate(text, edge_voice, rate=f"{self.rate:+d}%").stream():
             if chunk.get("type") == "audio":
                 audio.extend(chunk["data"])
                 if len(audio) > MAX_AUDIO:
@@ -111,7 +118,10 @@ class Speaker:
                 if _vieneu_model is None:
                     _vieneu_model = Vieneu()
                 result = Path(directory) / "voice.wav"
-                audio = _vieneu_model.infer(text, voice=VIE_VOICE)
+                vieneu_voice = self.voice if self.voice in VIE_VOICES else (
+                    "Quỳnh Anh" if self.voice == "vi-VN-HoaiMyNeural" else VIE_DEFAULT
+                )
+                audio = _vieneu_model.infer(text, voice=vieneu_voice, temperature=0.75, silence_p=0.18)
                 _vieneu_model.save(audio, str(result))
                 with wave.open(str(result), "rb") as wav:
                     if not wav.getnframes() or wav.getnframes() > wav.getframerate() * 58:

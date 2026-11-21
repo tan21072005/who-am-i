@@ -1,0 +1,37 @@
+BÔNG HOA LIVE — 16 HÀNH ĐỘNG BIỂU CẢM VÀ GIỌNG ĐỌC KỂ CHUYỆN TRUYỀN CẢM
+
+1. TỰ ĐỘNG CHỌN 16 HÀNH ĐỘNG BIỂU CẢM:
+- Trước đây khi đọc kịch bản, Bông chỉ đứng im nhép miệng (hành động TALK cố định).
+- Bản cập nhật này kích hoạt toàn bộ 16 hành động biểu cảm cho Bông:
+  + WAVE: Vẫy tay chào khi mở đầu buổi live hoặc có lời chào.
+  + BOW: Cúi đầu cảm ơn khi kết thúc buổi live hoặc có lời tri ân, tạm biệt.
+  + LAUGH: Cười vui vẻ khi kể chuyện cười, hài hước, bật cười.
+  + SAD: Nét mặt và cử chỉ buồn bã khi đoạn truyện có tình tiết đau xót, mất mát, chia ly.
+  + LOVE: Thả tim, bày tỏ yêu thương, cảm xúc ngọt ngào.
+  + SHOCK: Bất ngờ, ngạc nhiên, sửng sốt trước tình huống kịch tính.
+  + SCARED: Sợ hãi, lo lắng, hồi hộp trước nguy hiểm, rượt đuổi.
+  + HAPPY: Vui sướng, ăn mừng, hân hoan, rực rỡ.
+  + THINK: Trầm ngâm suy nghĩ khi có câu hỏi "?", bí ẩn, lý do tại sao.
+  + POINT: Chỉ tay tạo điểm nhấn (nhắc đến Vạn Lý Trường Thành, chú ý, đặc điểm quan trọng).
+  + LIKE: Giơ ngón cái khen ngợi, tán thưởng.
+  + ANGRY: Tức giận, phẫn nộ, bất bình.
+  + SHY: Ngại ngùng, thẹn thùng, e ấp.
+  + TIRED: Mệt mỏi, uể oải, ngáp ngủ.
+  + WINGS: Xòe cánh gián phấn khích.
+  + FLY: Bay tại chỗ lơ lửng.
+- Hỗ trợ 2 cơ chế linh hoạt:
+  + AI phân tích ngữ cảnh tự động: Khi đọc kịch bản/tài liệu bình thường, hệ thống tự động phân tích cảm xúc của từng câu để chọn hành động tương ứng (và luân chuyển cử chỉ tự nhiên, không bao giờ bị đứng im đơ người).
+  + Thẻ hành động [HÀNH_ĐỘNG]: Bạn hoặc 9Router có thể đặt thẻ ở đầu đoạn như [LAUGH], [SAD], [POINT], [CƯỜI], [BUỒN], [THẢ TIM]... Hệ thống sẽ tự động biểu diễn hành động đó và TỰ ĐỘNG LỌC BỎ THẺ khi đọc âm thanh (giọng đọc không bị đọc dính chữ thẻ).
+
+2. GIỌNG ĐỌC KỂ CHUYỆN TRUYỀN CẢM:
+- VieNeu GPU (NVIDIA CUDA):
+  + Đã tích hợp các bộ giọng chuyên phong cách đọc truyện và kể chuyện đỉnh cao:
+    * "Thiện Minh": Giọng Nam · Bắc · Phong cách kể chuyện (trầm ấm, lôi cuốn, truyền cảm).
+    * "Quỳnh Anh": Giọng Nữ · Bắc · Phong cách đọc truyện (nhẹ nhàng, tha thiết, cảm xúc).
+    * "Mỹ Duyên": Giọng Nữ · Nam · Phong cách đọc truyện.
+    * "Thái Sơn": Giọng Nam · Nam · Phong cách kể chuyện.
+    * "Hải Đăng": Giọng Nam · Bắc · Phong cách tự nhiên.
+  + Vào tab "Giọng & Âm thanh" -> Chọn giọng đọc "Thiện Minh" hoặc "Quỳnh Anh" -> Bấm "Lưu giọng".
+  + Các thông số nhịp điệu (temperature và silence_p) đã được tinh chỉnh để tạo nhịp thở ngắt nghỉ tự nhiên như người thật đang kể chuyện.
+- Edge TTS (Trực tuyến):
+  + 9Router đã được bổ sung chỉ dẫn văn phong kể chuyện: tự động thêm dấu phẩy, dấu chấm lửng "..." để ngắt nhịp kịch tính, giúp giọng Hoài Mỹ và Nam Minh tự động biểu cảm ngữ điệu khi đọc.

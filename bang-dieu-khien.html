@@ -276,7 +276,7 @@
             </section>
 <section class="panel stack">
               <h3>Ai chọn động tác</h3>
-              <label class="inline"><input form="interaction-settings" id="live-ai_actions" type="checkbox"> AI chọn biểu cảm khi trò chuyện</label>
+              <label class="inline"><input form="interaction-settings" id="live-ai_actions" type="checkbox"> AI tự chọn hành động biểu cảm (cho cả trò chuyện, kể chuyện và kịch bản)</label>
               <label>Động tác khi tắt AI chọn biểu cảm <select form="interaction-settings" id="live-fixed_action"></select></label>
               <label class="inline"><input form="interaction-settings" id="live-commands_on" type="checkbox"> Dùng lệnh chat cố định</label>
               <div id="live-commands" class="stack"></div>
@@ -377,8 +377,16 @@
 <div class="stack">
 <section class="panel stack">
   <h2>Giọng tổng hợp</h2>
-  <label>Giọng Edge TTS
-    <select id="speech-voice"><option value="vi-VN-HoaiMyNeural">Hoài Mỹ</option><option value="vi-VN-NamMinhNeural">Nam Minh</option></select>
+  <label>Giọng đọc
+    <select id="speech-voice">
+      <option value="vi-VN-HoaiMyNeural">Hoài Mỹ · Nữ (Edge TTS)</option>
+      <option value="vi-VN-NamMinhNeural">Nam Minh · Nam (Edge TTS)</option>
+      <option value="Thiện Minh">Thiện Minh · Kể chuyện (VieNeu GPU)</option>
+      <option value="Quỳnh Anh">Quỳnh Anh · Đọc truyện (VieNeu GPU)</option>
+      <option value="Mỹ Duyên">Mỹ Duyên · Đọc truyện Nam (VieNeu GPU)</option>
+      <option value="Thái Sơn">Thái Sơn · Kể chuyện Nam (VieNeu GPU)</option>
+      <option value="Hải Đăng">Hải Đăng · Tự nhiên (VieNeu GPU)</option>
+    </select>
   </label>
   <label>Phương thức đọc
     <select id="speech-engine"><option value="auto">Tự động · Ưu tiên Edge TTS</option><option value="edge">Edge TTS · Trực tuyến</option><option value="vieneu">VieNeu · GPU NVIDIA CUDA</option><option value="espeak">eSpeak NG · Cục bộ</option></select>
