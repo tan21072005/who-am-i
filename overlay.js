@@ -14,6 +14,19 @@ const pos = parameters.get("pos") || "top";
 if (captionNode && pos === "bottom") captionNode.classList.add("pos-bottom");
 let currentCaptionText = "";
 let currentCaptionPage = "";
+const isSetup = parameters.get("setup") === "1";
+let claimPrimary = false;
+let resultAccepted = true;
+
+function updateCaptionPreview() {
+  if (!isSetup || playing) return;
+  const sample = "Xin chào! Mình là Bông ✨";
+  captionTextNode.textContent = sample;
+  currentCaptionText = sample;
+  captionNode.hidden = parameters.get("captions") !== "1";
+  if (captionPageNode) captionPageNode.hidden = true;
+}
+if (isSetup) updateCaptionPreview();
 
 function splitCaption(text, limit = 12) {
   text = (text || "").trim();
@@ -68,7 +81,19 @@ let mirrorActive = false;
 document.body.classList.toggle("solid", parameters.get("bg") === "1");
 
 function setUnlock() {
-  unlock.hidden = (ready && !musicBlocked) || parameters.get("setup") !== "1";
+  if (!isSetup) {
+    unlock.hidden = true;
+    return;
+  }
+  if (!resultAccepted) {
+    unlock.textContent = "🔊 Nhấn vào đây để phát tiếng tại tab này";
+    unlock.hidden = false;
+  } else if (!ready || musicBlocked) {
+    unlock.textContent = "🔔 Bật âm thanh · Bông Hoa";
+    unlock.hidden = false;
+  } else {
+    unlock.hidden = true;
+  }
 }
 
 function startMusic() {
@@ -117,16 +142,17 @@ A · ${poll.aTitle} (${poll.a})    B · ${poll.bTitle} (${poll.b})`;
 }
 
 async function enableAudio() {
+  if (isSetup) claimPrimary = true;
   if (musicUrl) startMusic();
   try { ready = await voice.unlock(); } catch { ready = false; }
   setUnlock();
 }
 unlock.addEventListener("click", enableAudio);
 window.addEventListener("click", () => {
-  if (!ready && !mirror) void enableAudio();
+  if (isSetup || (!ready && !mirror)) void enableAudio();
 });
 window.addEventListener("keydown", () => {
-  if (!ready && !mirror) void enableAudio();
+  if (isSetup || (!ready && !mirror)) void enableAudio();
 });
 if (!mirror) void enableAudio();
 
@@ -135,10 +161,11 @@ function clearPlayback() {
   speaking = false;
   ack = null;
   if (voice) voice.stop();
-  captionNode.hidden = true;
   currentCaptionText = "";
   currentCaptionPage = "";
   if (captionPageNode) captionPageNode.hidden = true;
+  if (isSetup) updateCaptionPreview();
+  else captionNode.hidden = true;
 }
 
 async function playJob(job) {
@@ -198,10 +225,11 @@ async function playJob(job) {
   if (playing !== job.id) return;
   playing = null;
   speaking = false;
-  captionNode.hidden = true;
   currentCaptionText = "";
   currentCaptionPage = "";
   if (captionPageNode) captionPageNode.hidden = true;
+  if (isSetup) updateCaptionPreview();
+  else captionNode.hidden = true;
   ack = {id: job.id, failed};
 }
 
@@ -227,10 +255,11 @@ function showMirror(visual) {
     if (playing) flower.play("IDLE", Infinity);
     playing = null;
     flower.voiceOn = false;
-    captionNode.hidden = true;
     currentCaptionText = "";
     currentCaptionPage = "";
     if (captionPageNode) captionPageNode.hidden = true;
+    if (isSetup) updateCaptionPreview();
+    else captionNode.hidden = true;
     return;
   }
   const now = performance.now();
@@ -283,7 +312,15 @@ async function poll() {
       void enableAudio();
     }
     const sent = ack;
-    const result = await requestApi("render", {renderer, ready, playing, ack: sent, surface: parameters.get("setup") === "1" ? "setup" : "plain", visual: mirrorActive ? visualSnapshot() : null});
+    const forceClaim = claimPrimary;
+    const result = await requestApi("render", {
+      renderer, ready, force: forceClaim, playing, ack: sent,
+      surface: isSetup ? "setup" : "plain",
+      visual: mirrorActive ? visualSnapshot() : null
+    });
+    resultAccepted = Boolean(result.accepted);
+    if (forceClaim && resultAccepted) claimPrimary = false;
+    setUnlock();
     if (lastSeen && (!result.accepted || boot !== result.boot || generation !== result.generation)) clearPlayback();
     if (ack === sent) ack = null;
     lastSeen = performance.now();

@@ -129,11 +129,22 @@ el("auto").addEventListener("change", async event => {
   input.disabled = false;
 });
 el("copy").addEventListener("click", async () => {
+  const text = el("overlay-url")?.textContent || "";
   try {
-    await navigator.clipboard.writeText(url);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      throw new Error();
+    }
     message("Đã chép URL nguồn OBS.", false, true);
   } catch {
-    message("Hãy bôi đen URL bên trên và nhấn Ctrl+C.", false, true);
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    message("Đã chép URL nguồn OBS.", false, true);
   }
 });
 void refresh();

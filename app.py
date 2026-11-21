@@ -583,8 +583,12 @@ class Channel:
                     "visual": dict(visual, age=round((now - visual["received"]) * 1000),
                                    text=visual.get("text") or self.active["text"]) if synced else None,
                 }
+            now = time.monotonic()
             ready = body.get("ready") is True
-            if self.renderer is None or (not self.active and (not self.ready or ready)):
+            force = body.get("force") is True
+            if self.renderer is None or now - self.seen > PLAY_LEASE or force:
+                self.renderer = renderer
+            elif self.renderer != renderer and not self.ready and ready and not self.active:
                 self.renderer = renderer
             accepted = renderer == self.renderer
             out = {"accepted": accepted, "boot": self.boot,
@@ -592,7 +596,7 @@ class Channel:
                    "mode": self.presentation.mode}
             if not accepted:
                 return out
-            self.seen = time.monotonic()
+            self.seen = now
             self.ready = ready
             self.renderer_surface = body.get("surface") if body.get("surface") in ("setup", "plain") else ""
             out["mirrorActive"] = self.seen - self.mirror_seen < 2
