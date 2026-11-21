@@ -10,6 +10,7 @@ from io import BytesIO
 import json
 import os
 from pathlib import Path
+import queue
 import re
 import secrets
 import sqlite3
@@ -145,7 +146,7 @@ def extract_gesture(text, slot=0, total=30, auto_ai=True):
 STATIC = {
     "bang-dieu-khien.html", "THU-NHAN-VAT.html", "overlay.html", "overlay.css",
     "tro-ly.js", "kho-tai-lieu.js", "giao-dien.css", "cai-dat.js", "hieu-ung-data.js", "hieu-ung.js", "nhan-vat.js", "ket-noi.js", "thu.js", "overlay.js", "dieu-khien.js", "tuong-tac.js", "thiet-lap.js",
-    "overlay-3d.html", "nhan-vat-4be.js",
+    "overlay-3d.html", "nhan-vat-4be.js", "nhan-vat-4be.css",
 }
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 GOOGLE_MODELS = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -1603,6 +1604,33 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(403, {"error": "Mở bằng địa chỉ 127.0.0.1 in trong cửa sổ chạy."})
             return
         name = urlsplit(self.path).path.removeprefix("/") or "bang-dieu-khien.html"
+        if name.startswith("api/multi/events"):
+            if not multi_bridge:
+                self.reply(503, {"error": "MultiCharacter bridge chưa khởi tạo."})
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "keep-alive")
+            self.send_header("X-Accel-Buffering", "no")
+            self.end_headers()
+            q = multi_bridge.subscribe_sse()
+            try:
+                self.wfile.write(b": connected\n\n")
+                self.wfile.flush()
+                while True:
+                    try:
+                        msg = q.get(timeout=1.0)
+                        self.wfile.write(msg.encode("utf-8"))
+                        self.wfile.flush()
+                    except queue.Empty:
+                        self.wfile.write(b": keepalive\n\n")
+                        self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, TimeoutError, OSError):
+                pass
+            finally:
+                multi_bridge.unsubscribe_sse(q)
+            return
         if name.startswith("api/multi/audio"):
             query = parse_qs(urlsplit(self.path).query)
             filename = Path(query.get("file", [""])[0]).name

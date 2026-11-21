@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Điều khiển · Bông Hoa Live</title>
   <link rel="stylesheet" href="giao-dien.css">
+  <link rel="stylesheet" href="/nhan-vat-4be.css" />
   <script src="nhan-vat.js" defer></script>
   <script src="ket-noi.js?v=20261122d" defer></script>
   <script src="dieu-khien.js?v=20261122d" defer></script>
@@ -13,7 +14,6 @@
   <script src="kho-tai-lieu.js" defer></script>
   <script src="tro-ly.js" defer></script>
   <script src="thiet-lap.js" defer></script>
-  <script src="nhan-vat-4be.js?v=20261122" defer></script>
 </head>
 <body>
   <main class="shell">
@@ -459,54 +459,9 @@
 </div>
 </div>
 </section>
-<section class="stack control-pane" id="pane-nhanvat" role="tabpanel" aria-labelledby="tab-nhanvat" hidden>
-  <div class="dashboard-grid">
-    <!-- Cột trái: Quản lý 4 nhân vật -->
-    <div class="stack">
-      <section class="panel stack">
-        <h2>Đội hình 4 nhân vật</h2>
-        <div id="multi-char-list" class="stack" style="gap:12px;"></div>
-      </section>
-    </div>
-
-    <!-- Cột phải: Cấu hình sân khấu, FPS & Gửi thử -->
-    <div class="stack">
-      <section class="panel stack">
-        <h2>Cấu hình sân khấu OBS</h2>
-        <p class="subtle">Nguồn phát: <a href="/overlay-3d.html?mirror=1&captions=1" target="_blank" style="color:var(--accent);">/overlay-3d.html?mirror=1&captions=1</a></p>
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-          <label style="margin:0;">Tốc độ khung hình (FPS)
-            <select id="multi-fps-select">
-              <option value="24">24 FPS (Nhẹ nhất)</option>
-              <option value="30" selected>30 FPS (Khuyên dùng)</option>
-              <option value="60">60 FPS (Mượt tối đa)</option>
-            </select>
-          </label>
-          <label class="inline" style="margin:0;margin-top:16px;">
-            <input type="checkbox" id="multi-drag-toggle"> Kéo-thả vị trí tự do
-          </label>
-        </div>
-        <div class="row">
-          <button id="multi-save-stage" type="button" class="primary">Lưu cấu hình sân khấu</button>
-        </div>
-        <p id="multi-stage-note" class="subtle" role="status"></p>
-      </section>
-
-      <section class="panel stack">
-        <h2>Thử bình luận 4 nhân vật đối đáp</h2>
-        <label>Nội dung bình luận
-          <input id="multi-test-input" type="text" placeholder="Ví dụ: @ho sao anh Hổ quạu vậy, kể chuyện ma đi!">
-        </label>
-        <div class="row">
-          <button id="multi-test-send" type="button" class="primary">Gửi thử bình luận 4 bé</button>
-          <button id="multi-test-idle" type="button">Kích hoạt chuyện phiếm</button>
-        </div>
-        <p id="multi-test-note" class="subtle" role="status"></p>
-      </section>
-    </div>
-  </div>
-</section>
+<section class="stack control-pane" id="pane-nhanvat" role="tabpanel" aria-labelledby="tab-nhanvat" hidden></section>
 <p id="live-status" class="interaction-note" role="status" hidden>Đang tải cài đặt…</p>
 </main>
+<script src="/nhan-vat-4be.js"></script>
 </body>
 </html>

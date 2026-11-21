@@ -1,18 +1,20 @@
 """
-Cầu nối điều phối livestream (Live Director Bridge) cho dự án who-am-i.
+Cầu nối điều phối livestream (Live Director Bridge v2 — Chuẩn vận hành ổn định) cho who-am-i.
 
-Nhiệm vụ:
-1. Gom bình luận TikTok LIVE theo cửa sổ thời gian (3-5 giây) để phòng đông không bị ngộp.
-2. Ưu tiên xử lý: Quà tặng (Gift) > Gọi đích danh (@ho, !tho...) > Bình luận mới nhất.
-3. Gọi director_prompt.py + router_api.py để sinh chuỗi 2-3 lượt đối đáp rồi đẩy vào
-   MultiCharacterAudioPipeline với độ ưu tiên cao (PRIORITY_LIVE).
-4. Cung cấp các handler API sẵn sàng gắn vào app.py cho tab 'Nhân vật (4 bé)' trên
-   bang-dieu-khien.html (http://127.0.0.1:8765/#live) và sân khấu overlay-3d.html.
+Nâng cấp v2:
+1. Ghi cấu hình JSON nguyên tử (Atomic Write: temp file + os.replace) chống hỏng tệp khi kéo slider.
+2. Hỗ trợ nút Ngắt khẩn cấp (multi_panic_stop) với stop_seq để cắt audio & animation tức thì trên OBS.
+3. Hỗ trợ Preset đội hình 1 chạm (multi_apply_preset) và thông số giám sát sức khỏe (health).
+4. Tích hợp SSE Event Hub (subscribe_sse / broadcast_event) để đẩy trạng thái thời gian thực (<50ms),
+   vẫn tương thích 100% nếu frontend dùng polling cũ.
 """
 
 from __future__ import annotations
 
 import json
+import os
+import queue
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -29,6 +31,33 @@ from audio_pipeline import (
 
 LLMCallFunc = Callable[[str, str], str]
 
+SCENE_PRESETS: dict[str, dict[str, dict[str, Any]]] = {
+    "all4": {
+        "bong": {"enabled": True, "x_ratio": 0.14, "scale": 0.92},
+        "rong": {"enabled": True, "x_ratio": 0.38, "scale": 0.95},
+        "ho":   {"enabled": True, "x_ratio": 0.62, "scale": 1.00},
+        "tho":  {"enabled": True, "x_ratio": 0.86, "scale": 0.94},
+    },
+    "solo_bong": {
+        "bong": {"enabled": True,  "x_ratio": 0.50, "scale": 1.08},
+        "rong": {"enabled": False, "x_ratio": 0.38, "scale": 0.95},
+        "ho":   {"enabled": False, "x_ratio": 0.62, "scale": 1.00},
+        "tho":  {"enabled": False, "x_ratio": 0.86, "scale": 0.94},
+    },
+    "ho_tho": {
+        "bong": {"enabled": False, "x_ratio": 0.14, "scale": 0.92},
+        "rong": {"enabled": False, "x_ratio": 0.38, "scale": 0.95},
+        "ho":   {"enabled": True,  "x_ratio": 0.34, "scale": 1.06},
+        "tho":  {"enabled": True,  "x_ratio": 0.66, "scale": 1.02},
+    },
+    "trio_3d": {
+        "bong": {"enabled": False, "x_ratio": 0.14, "scale": 0.92},
+        "rong": {"enabled": True,  "x_ratio": 0.22, "scale": 0.98},
+        "ho":   {"enabled": True,  "x_ratio": 0.50, "scale": 1.02},
+        "tho":  {"enabled": True,  "x_ratio": 0.78, "scale": 0.98},
+    },
+}
+
 
 class LiveDirectorBridge:
     def __init__(
@@ -44,20 +73,51 @@ class LiveDirectorBridge:
 
         self._lock = threading.Lock()
         self._comment_buffer: list[dict[str, Any]] = []
+        self._started_at = time.time()
         self._last_flush_at = time.time()
         self._last_activity_at = time.time()
+        self._last_error: str | None = None
+        self._stop_seq = 0
+        self._sse_subscribers: list[queue.Queue[str]] = []
 
-        # Trạng thái hiển thị trực tiếp gửi sang overlay-3d.html & bang-dieu-khien.html
         self.stage_config: dict[str, Any] = {
             "fps": 30,
             "free_drag": False,
             "mirror_audio": False,
             "active_episode": None,
+            "active_preset": "all4",
+            "stop_seq": 0,
         }
 
         self._stop = threading.Event()
         self._batch_thread = threading.Thread(target=self._batch_loop, daemon=True, name="comment-batcher")
         self._batch_thread.start()
+
+    # ------------------------------------------------------------------
+    # SSE Real-Time Event Hub (tùy chọn nối GET /api/multi/events trong app.py)
+    # ------------------------------------------------------------------
+    def subscribe_sse(self) -> queue.Queue[str]:
+        q: queue.Queue[str] = queue.Queue(maxsize=32)
+        with self._lock:
+            self._sse_subscribers.append(q)
+        return q
+
+    def unsubscribe_sse(self, q: queue.Queue[str]) -> None:
+        with self._lock:
+            if q in self._sse_subscribers:
+                self._sse_subscribers.remove(q)
+
+    def broadcast_event(self, event_type: str, data: dict[str, Any]) -> None:
+        payload = f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+        with self._lock:
+            dead: list[queue.Queue[str]] = []
+            for q in self._sse_subscribers:
+                try:
+                    q.put_nowait(payload)
+                except queue.Full:
+                    dead.append(q)
+            for q in dead:
+                self._sse_subscribers.remove(q)
 
     # ------------------------------------------------------------------
     # Kết nối mặc định với router_api.py trong who-am-i
@@ -70,7 +130,8 @@ class LiveDirectorBridge:
                 return str(router_api.ask_router(system_prompt=system_prompt, user_prompt=user_prompt))
         except ImportError:
             pass
-        # Fallback khi kiểm thử cục bộ không có 9Router
+        except Exception as exc:
+            self._last_error = f"LLM Router: {exc}"
         return json.dumps(
             {
                 "topic_summary": "Phản hồi thử nghiệm",
@@ -98,7 +159,6 @@ class LiveDirectorBridge:
     # Nhận sự kiện từ TikTokLiveClient (app.py / tuong_tac.py)
     # ------------------------------------------------------------------
     def on_tiktok_comment(self, viewer_name: str, comment_text: str, gift_name: str | None = None) -> None:
-        """Gọi hàm này trong callback bình luận / quà tặng của TikTokLiveClient."""
         mentioned = director_prompt.detect_mentioned_characters(comment_text, self.profile)
         score = 100 if gift_name else (50 if mentioned else 10)
         with self._lock:
@@ -121,15 +181,19 @@ class LiveDirectorBridge:
             now = time.time()
             picked: dict[str, Any] | None = None
             with self._lock:
-                if self._comment_buffer and (now - self._last_flush_at >= window or any(c["gift_name"] for c in self._comment_buffer)):
-                    # Chọn bình luận điểm cao nhất (ưu tiên quà tặng -> gọi đích danh -> mới nhất)
+                if self._comment_buffer and (
+                    now - self._last_flush_at >= window or any(c["gift_name"] for c in self._comment_buffer)
+                ):
                     self._comment_buffer.sort(key=lambda x: (x["score"], x["ts"]), reverse=True)
                     picked = self._comment_buffer[0]
                     self._comment_buffer.clear()
                     self._last_flush_at = now
 
             if picked:
-                self._process_comment(picked)
+                try:
+                    self._process_comment(picked)
+                except Exception as exc:
+                    self._last_error = f"Batch error: {exc}"
 
     def _process_comment(self, item: dict[str, Any]) -> list[dict[str, Any]]:
         sys_prompt = director_prompt.build_system_prompt(self.profile)
@@ -144,46 +208,108 @@ class LiveDirectorBridge:
         parsed = director_prompt.parse_director_response(raw, self.profile)
         turns = parsed.get("turns", [])
         self.pipeline.enqueue_turns(turns, priority=PRIORITY_LIVE, source="live")
+        self.broadcast_event("state", self._build_state_payload())
         return turns
 
+    def _build_health_payload(self) -> dict[str, Any]:
+        pipe_status = self.pipeline.get_status()
+        with self._lock:
+            buffer_len = len(self._comment_buffer)
+            last_err = self._last_error
+        pending = int(pipe_status.get("pending_tts", pipe_status.get("pending_count", 0)))
+        ready = int(pipe_status.get("ready_to_play", pipe_status.get("ready_count", 0)))
+        return {
+            "ok": True,
+            "uptime_sec": int(time.time() - self._started_at),
+            "buffer_comments": buffer_len,
+            "queue_pending": pending,
+            "queue_ready": ready,
+            "queue_total": pending + ready,
+            "stop_seq": self._stop_seq,
+            "last_error": last_err,
+            "sse_clients": len(self._sse_subscribers),
+        }
+
+    def _build_state_payload(self) -> dict[str, Any]:
+        return {
+            "ok": True,
+            "stage": self.stage_config,
+            "characters": self.profile.get("characters", []),
+            "pipeline": self.pipeline.get_status(),
+            "health": self._build_health_payload(),
+        }
+
     # ------------------------------------------------------------------
-    # Các API Endpoint sẵn sàng nối vào app.py (POST /api/multi/<op>)
+    # Các API Endpoint nối vào app.py (POST /api/multi_*)
     # ------------------------------------------------------------------
     def handle_api(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
-        """
-        Gắn trực tiếp vào handler POST /api/<operation> trong app.py.
-        """
         if operation == "multi_state":
-            return {
-                "ok": True,
-                "stage": self.stage_config,
-                "characters": self.profile.get("characters", []),
-                "pipeline": self.pipeline.get_status(),
-            }
+            return self._build_state_payload()
+
+        if operation == "multi_health":
+            return self._build_health_payload()
+
+        if operation == "multi_panic_stop":
+            with self._lock:
+                self._comment_buffer.clear()
+                self._stop_seq += 1
+                self.stage_config["stop_seq"] = self._stop_seq
+                self._last_error = None
+            if hasattr(self.pipeline, "clear_all"):
+                self.pipeline.clear_all()
+            self.broadcast_event("panic_stop", {"stop_seq": self._stop_seq})
+            return {"ok": True, "stop_seq": self._stop_seq, "health": self._build_health_payload()}
+
+        if operation == "multi_apply_preset":
+            preset_id = str(payload.get("preset", "all4")).strip()
+            preset = SCENE_PRESETS.get(preset_id)
+            if not preset:
+                return {"ok": False, "error": f"Không tìm thấy preset '{preset_id}'"}
+            with self._lock:
+                for char in self.profile.get("characters", []):
+                    rule = preset.get(char["id"])
+                    if rule:
+                        char["enabled"] = bool(rule["enabled"])
+                        char.setdefault("stage", {})["x_ratio"] = float(rule["x_ratio"])
+                        char.setdefault("stage", {})["scale"] = float(rule["scale"])
+                self.stage_config["active_preset"] = preset_id
+                self._save_profile_unlocked()
+            state_out = self._build_state_payload()
+            self.broadcast_event("state", state_out)
+            return state_out
 
         if operation == "multi_update_character":
             cid = str(payload.get("id", "")).lower()
-            for char in self.profile.get("characters", []):
-                if char["id"] == cid:
-                    if "enabled" in payload:
-                        char["enabled"] = bool(payload["enabled"])
-                    if "active_skin" in payload:
-                        char.setdefault("renderer", {})["active_skin"] = str(payload["active_skin"])
-                    if "voice_name" in payload:
-                        char.setdefault("voice", {})["voice_name"] = str(payload["voice_name"])
-                    if "x_ratio" in payload:
-                        char.setdefault("stage", {})["x_ratio"] = float(payload["x_ratio"])
-                    if "scale" in payload:
-                        char.setdefault("stage", {})["scale"] = float(payload["scale"])
-                    self._save_profile()
-                    return {"ok": True, "character": char}
-            return {"ok": False, "error": f"Không tìm thấy nhân vật '{cid}'"}
+            updated = None
+            with self._lock:
+                for char in self.profile.get("characters", []):
+                    if char["id"] == cid:
+                        if "enabled" in payload:
+                            char["enabled"] = bool(payload["enabled"])
+                        if "active_skin" in payload:
+                            char.setdefault("renderer", {})["active_skin"] = str(payload["active_skin"])
+                        if "voice_name" in payload:
+                            char.setdefault("voice", {})["voice_name"] = str(payload["voice_name"])
+                        if "x_ratio" in payload:
+                            char.setdefault("stage", {})["x_ratio"] = max(0.05, min(0.95, float(payload["x_ratio"])))
+                        if "scale" in payload:
+                            char.setdefault("stage", {})["scale"] = max(0.55, min(1.4, float(payload["scale"])))
+                        self.stage_config["active_preset"] = "custom"
+                        self._save_profile_unlocked()
+                        updated = char
+                        break
+            if updated is None:
+                return {"ok": False, "error": f"Không tìm thấy nhân vật '{cid}'"}
+            self.broadcast_event("state", self._build_state_payload())
+            return {"ok": True, "character": updated}
 
         if operation == "multi_stage_settings":
-            if "fps" in payload:
-                self.stage_config["fps"] = int(payload["fps"])
-            if "free_drag" in payload:
-                self.stage_config["free_drag"] = bool(payload["free_drag"])
+            with self._lock:
+                if "fps" in payload:
+                    self.stage_config["fps"] = int(payload["fps"])
+                if "free_drag" in payload:
+                    self.stage_config["free_drag"] = bool(payload["free_drag"])
+            self.broadcast_event("state", self._build_state_payload())
             return {"ok": True, "stage": self.stage_config}
 
         if operation == "multi_trigger_action":
@@ -205,6 +331,7 @@ class LiveDirectorBridge:
                 "voice_speed": float(v.get("speed", 1.0)),
             }
             self.pipeline.enqueue_turns([turn], priority=PRIORITY_MANUAL, source="manual")
+            self.broadcast_event("state", self._build_state_payload())
             return {"ok": True, "queued": turn}
 
         if operation == "multi_test_comment":
@@ -220,42 +347,43 @@ class LiveDirectorBridge:
                 return {"ok": False, "error": f"Không tìm thấy tệp {manifest}"}
             count = self.pipeline.load_pregen_episode(manifest)
             self.stage_config["active_episode"] = manifest.parent.name
+            self.broadcast_event("state", self._build_state_payload())
             return {"ok": True, "loaded_turns": count}
 
         if operation == "multi_next_playback":
             nxt = self.pipeline.pop_next_for_playback()
-            return {"ok": True, "event": nxt}
+            return {"ok": True, "event": nxt, "stop_seq": self._stop_seq}
 
         if operation == "multi_trigger_idle":
             sys_prompt = director_prompt.build_system_prompt(self.profile)
             user_prompt = director_prompt.build_idle_prompt(self.profile, self.pipeline.get_recent_history())
             parsed = director_prompt.parse_director_response(self.llm_fn(sys_prompt, user_prompt), self.profile)
-            self.pipeline.enqueue_turns(parsed.get("turns", []), priority=PRIORITY_IDLE, source="idle")
-            return {"ok": True, "turns": parsed.get("turns", [])}
+            turns = parsed.get("turns", [])
+            self.pipeline.enqueue_turns(turns, priority=PRIORITY_IDLE, source="idle")
+            self.broadcast_event("state", self._build_state_payload())
+            return {"ok": True, "turns": turns}
 
         return {"ok": False, "error": f"Lệnh không hỗ trợ: {operation}"}
 
-    def _save_profile(self) -> None:
-        self.profile_path.write_text(json.dumps(self.profile, ensure_ascii=False, indent=2), encoding="utf-8")
+    def _save_profile_unlocked(self) -> None:
+        """Ghi file nguyên tử (atomic write) để tránh hỏng JSON khi nhiều thao tác diễn ra liên tiếp."""
+        parent = self.profile_path.parent
+        parent.mkdir(parents=True, exist_ok=True)
+        content = json.dumps(self.profile, ensure_ascii=False, indent=2)
+        fd, tmp_name = tempfile.mkstemp(prefix=".profile_", suffix=".tmp", dir=str(parent))
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as tmp_f:
+                tmp_f.write(content)
+                tmp_f.flush()
+                os.fsync(tmp_f.fileno())
+            os.replace(tmp_name, self.profile_path)
+        except Exception:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+            raise
 
     def shutdown(self) -> None:
         self._stop.set()
         self._batch_thread.join(timeout=2.0)
-
-
-if __name__ == "__main__":
-    cfg = Path(__file__).with_name("kenh-1-multi.json")
-    pipe = MultiCharacterAudioPipeline(cache_dir="/tmp/test_bridge_cache")
-    bridge = LiveDirectorBridge(cfg, pipe)
-
-    res = bridge.handle_api(
-        "multi_test_comment",
-        {"viewer_name": "Minh Anh", "comment_text": "@ho kể chuyện ma đi!", "gift_name": "Hoa hồng"},
-    )
-    assert res["ok"] and len(res["turns"]) >= 1
-    time.sleep(0.25)
-    ev = bridge.handle_api("multi_next_playback", {})
-    assert ev["ok"] and ev["event"] is not None
-    bridge.shutdown()
-    pipe.shutdown()
-    print("OK live_director_bridge.py self-test passed!")

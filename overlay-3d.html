@@ -7,88 +7,46 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: transparent;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      width: 100%; height: 100%; overflow: hidden; background: transparent;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
-    #stage-root {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-    }
-    /* Three.js WebGL Layer cho 3 nhân vật 3D (.glb) */
-    #three-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    /* Canvas 2D cho Bé Gián Hoa (tái sử dụng nhan-vat.js hiện có ở Slot 0) */
+    body.bg-dark { background: radial-gradient(circle at 50% 42%, #2a203b 0%, #191325 65%, #110d18 100%); }
+    body.bg-chroma { background: #00b140; }
+    body.bg-checker { background: transparent; }
+
+    #stage-root { position: relative; width: 100vw; height: 100vh; overflow: hidden; user-select: none; }
+    #three-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     #flower {
-      position: absolute;
-      left: 3%;
-      bottom: 2%;
-      width: 24vw;
-      max-width: 340px;
-      height: auto;
-      pointer-events: none;
-      transition: transform 0.3s ease, filter 0.3s ease;
+      position: absolute; left: 14%; bottom: 4%; transform: translateX(-50%);
+      width: 22vw; max-width: 320px; height: auto; pointer-events: none;
+      transition: transform 0.25s ease, filter 0.25s ease;
     }
     #flower.speaking {
-      transform: scale(1.08) translateY(-6px);
-      filter: drop-shadow(0 0 18px rgba(255, 182, 193, 0.7));
+      transform: translateX(-50%) scale(1.08) translateY(-6px);
+      filter: drop-shadow(0 0 18px rgba(255, 196, 140, 0.72));
     }
-    /* Khung thoại kiểu Manga giống overlay.html gốc */
     #bubble-manga {
-      position: absolute;
-      top: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      max-width: min(760px, 88vw);
-      padding: 14px 22px;
-      border-radius: 20px;
-      border: 3px solid #111827;
-      background: #fff5f5;
-      color: #111827;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), 4px 4px 0 #111827;
-      opacity: 0;
-      transition: opacity 0.25s ease, background-color 0.25s ease;
-      pointer-events: none;
-      z-index: 30;
+      position: absolute; top: 4%; left: 50%; transform: translateX(-50%);
+      max-width: min(740px, 88vw); padding: 12px 20px; border-radius: 18px;
+      border: 2.5px solid #1a1224; background: #fff5f5; color: #1a1224;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), 4px 4px 0 #1a1224;
+      opacity: 0; transition: opacity 0.22s ease, background-color 0.22s ease;
+      pointer-events: none; z-index: 30;
     }
     #bubble-manga.visible { opacity: 1; }
-    #bubble-speaker {
-      font-size: 13px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #374151;
-      margin-bottom: 4px;
+    #bubble-speaker { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #3f3352; margin-bottom: 3px; }
+    #bubble-text { font-size: clamp(14px, 1.9vw, 22px); font-weight: 800; line-height: 1.35; }
+    .name-plates { position: absolute; inset: 0; pointer-events: none; z-index: 20; display: none; }
+    body.is-preview .name-plates { display: block; }
+    .name-plate {
+      position: absolute; bottom: 10px; transform: translateX(-50%);
+      padding: 4px 12px; border-radius: 999px;
+      background: rgba(30, 24, 40, 0.88); border: 1px solid rgba(255, 196, 140, 0.35);
+      color: #f7f2fb; font-size: 11px; font-weight: 700; white-space: nowrap;
+      transition: left 0.15s ease;
     }
-    #bubble-text {
-      font-size: clamp(16px, 2.1vw, 24px);
-      font-weight: 800;
-      line-height: 1.35;
-    }
-    #setup-banner {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.8);
-      color: #a7f3d0;
-      font-size: 12px;
-      font-weight: 700;
-      z-index: 40;
-      display: none;
-    }
+    .name-plate.active { background: #ffc48c; border-color: #ffc48c; color: #1a1224; }
   </style>
-  <!-- Import map cho Three.js ES Modules -->
   <script type="importmap">
     {
       "imports": {
@@ -102,99 +60,73 @@
   <div id="stage-root">
     <canvas id="three-canvas"></canvas>
     <canvas id="flower" width="480" height="530"></canvas>
-
+    <div class="name-plates">
+      <div id="plate-bong" class="name-plate" style="left:14%;">🌸 Bông Đào</div>
+      <div id="plate-rong" class="name-plate" style="left:38%;">🐉 Bé Rồng Ngọc</div>
+      <div id="plate-ho" class="name-plate" style="left:62%;">🐯 Hổ Mập</div>
+      <div id="plate-tho" class="name-plate" style="left:86%;">🐰 Thỏ Cà Rốt</div>
+    </div>
     <div id="bubble-manga">
       <div id="bubble-speaker">Bông Đào</div>
       <div id="bubble-text"></div>
     </div>
-
-    <div id="setup-banner">Nguồn âm thanh 4 nhân vật • 30 FPS</div>
   </div>
 
-  <!-- Tái sử dụng nhan-vat.js hiện có của dự án who-am-i cho Bé Gián Hoa -->
   <script src="/nhan-vat.js"></script>
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-    // =========================================================================
-    // 1. THAM SỐ URL GIỐNG overlay.html GỐC (?mirror=1&captions=1&setup=1)
-    // =========================================================================
     const params = new URLSearchParams(window.location.search);
-    const IS_MIRROR = params.get('mirror') === '1';
+    const IS_PREVIEW = params.get('preview') === '1';
+    // Khóa cứng chống vọng tiếng: bản preview hoặc mirror=1 KHÔNG BAO GIỜ phát audio
+    const IS_MIRROR = params.get('mirror') === '1' || IS_PREVIEW;
     const SHOW_CAPTIONS = params.get('captions') !== '0';
-    const IS_SETUP = params.get('setup') === '1';
+    const INIT_BG = params.get('bg') || '';
 
-    if (IS_SETUP) {
-      document.getElementById('setup-banner').style.display = 'block';
+    if (IS_PREVIEW) document.body.classList.add('is-preview');
+
+    function applyBg(mode) {
+      document.body.classList.remove('bg-dark', 'bg-chroma', 'bg-checker');
+      if (mode === 'dark' || mode === 'chroma' || mode === 'checker') {
+        document.body.classList.add('bg-' + mode);
+      }
     }
+    if (INIT_BG) applyBg(INIT_BG);
 
-    // Khởi tạo Bé Gián Hoa (Canvas 2D sẵn có của who-am-i)
     let flowerChar = null;
     if (window.BongHoa && window.BongHoa.Flower) {
       flowerChar = new window.BongHoa.Flower(document.getElementById('flower'), { palette: 'dao' });
     }
 
-    // =========================================================================
-    // 2. CẤU HÌNH KHỚP CHÍNH XÁC TÊN FILE & TÊN CLIP TRONG 4 TỆP .GLB ĐÃ TỐI ƯU
-    // =========================================================================
     const MODELS_CFG = {
       rong: {
-        url: '/assets/models/rong/rong_optimized.glb',
-        x: -1.35,
-        y: -0.92,
-        scale: 0.92,
-        bubbleColor: '#E0F7F4',
+        url: '/assets/models/rong/rong_optimized.glb', xRatio: 0.38, y: -0.92, scale: 0.92,
+        skinTints: { default: 0xffffff, tet: 0xffe0d0 },
         clips: {
-          IDLE: 'Idle',
-          TALK: 'Idle',
-          WAVE: 'Big_Wave_Hello',
-          HAPPY: 'Happy_jump_f',
-          LAUGH: 'Happy_jump_f',
-          LOVE: 'Happy_jump_f',
-          ANGRY: 'Angry_Stomp',
-          ROAR: 'Angry_Stomp',
-          SCARED: 'Head_Hold_in_Pain',
-          SHOCK: 'Head_Hold_in_Pain',
-          SAD: 'Head_Hold_in_Pain',
-          FLY: 'Happy_jump_f',
-          ICE_BREATH: 'Angry_Stomp'
+          IDLE: 'Idle', TALK: 'Idle', WAVE: 'Big_Wave_Hello',
+          HAPPY: 'Happy_jump_f', LAUGH: 'Happy_jump_f', LOVE: 'Happy_jump_f',
+          ANGRY: 'Angry_Stomp', ROAR: 'Angry_Stomp', ICE_BREATH: 'Angry_Stomp',
+          SCARED: 'Head_Hold_in_Pain', SHOCK: 'Head_Hold_in_Pain', SAD: 'Head_Hold_in_Pain',
+          FLY: 'Happy_jump_f'
         }
       },
       ho: {
-        url: '/assets/models/ho/ho_optimized.glb',
-        x: 0.35,
-        y: -0.92,
-        scale: 0.95,
-        bubbleColor: '#FFE8C2',
+        url: '/assets/models/ho/ho_optimized.glb', xRatio: 0.62, y: -0.92, scale: 0.95,
+        skinTints: { default: 0xffffff, glasses: 0xe6f2ff },
         clips: {
-          IDLE: 'Idle',
-          TALK: 'Talk_Passionately',
-          WAVE: 'Big_Wave_Hello',
-          HAPPY: 'Victory_Cheer',
-          LAUGH: 'Victory_Cheer',
-          LOVE: 'Victory_Cheer',
-          ANGRY: 'Angry_Ground_Stomp',
-          SHOCK: 'Angry_Ground_Stomp',
-          THINK: 'Talk_Passionately'
+          IDLE: 'Idle', TALK: 'Talk_Passionately', WAVE: 'Big_Wave_Hello',
+          HAPPY: 'Victory_Cheer', LAUGH: 'Victory_Cheer', LOVE: 'Victory_Cheer',
+          ANGRY: 'Angry_Ground_Stomp', SHOCK: 'Angry_Ground_Stomp', THINK: 'Talk_Passionately'
         }
       },
       tho: {
-        url: '/assets/models/tho/tho_optimized.glb',
-        x: 2.05,
-        y: -0.92,
-        scale: 0.92,
-        bubbleColor: '#FFF0D6',
+        url: '/assets/models/tho/tho_optimized.glb', xRatio: 0.86, y: -0.92, scale: 0.92,
+        skinTints: { default: 0xffffff, hat: 0xfff0f6 },
         clips: {
-          IDLE: 'Idle',
-          TALK: 'Talk_with_Hands_Open',
-          WAVE: 'Big_Wave_Hello',
-          HAPPY: 'Motivational_Cheer',
-          LAUGH: 'Motivational_Cheer',
-          LOVE: 'Motivational_Cheer',
-          SCARED: 'Confused_Scratch',
-          SHY: 'Confused_Scratch',
-          THINK: 'Confused_Scratch'
+          IDLE: 'Idle', TALK: 'Talk_with_Hands_Open', WAVE: 'Big_Wave_Hello',
+          HAPPY: 'Motivational_Cheer', LAUGH: 'Motivational_Cheer', LOVE: 'Motivational_Cheer',
+          SCARED: 'Confused_Scratch', SHY: 'Confused_Scratch', THINK: 'Confused_Scratch'
         }
       }
     };
@@ -202,9 +134,6 @@
     const CARROT_URL = '/assets/models/props/carrot_optimized.glb';
     const BUBBLE_COLORS = { bong: '#FFE4E1', rong: '#E0F7F4', ho: '#FFE8C2', tho: '#FFF0D6' };
 
-    // =========================================================================
-    // 3. KHỞI TẠO THREE.JS SIÊU NHẸ GPU (TẮT SHADOW MAP NẶNG, GIỚI HẠN PIXEL RATIO)
-    // =========================================================================
     const canvas = document.getElementById('three-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -217,12 +146,11 @@
     const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 50);
     camera.position.set(0, 0.2, 6.2);
 
-    // Ánh sáng studio dịu nhẹ (0 tốn shadow map)
-    scene.add(new THREE.AmbientLight(0xffffff, 1.35));
-    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.4);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.38));
+    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.42);
     keyLight.position.set(2.5, 4.5, 5);
     scene.add(keyLight);
-    const rimLight = new THREE.DirectionalLight(0x99f6e4, 0.7);
+    const rimLight = new THREE.DirectionalLight(0xffd8b4, 0.65);
     rimLight.position.set(-3, 2, -3);
     scene.add(rimLight);
 
@@ -232,11 +160,47 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // =========================================================================
-    // 4. NẠP 3 MODEL .GLB & TỰ GẮN CARROT.GLB VÀO KHỚP 'RightHand' CỦA THỎ
-    // =========================================================================
+    const xRatioToWorldX = (ratio) => (ratio - 0.5) * 6.0;
     const loader = new GLTFLoader();
-    const actors = {}; // id -> { root, mixer, actions, currentAction, baseScale, baseY, isSpeaking, emotion }
+    const actors = {};
+    let freeDragEnabled = false;
+    let charEnabledMap = { bong: true, rong: true, ho: true, tho: true };
+    let charXRatioMap = { bong: 0.14, rong: 0.38, ho: 0.62, tho: 0.86 };
+
+    function applySkinTint(id, skinId) {
+      const actor = actors[id];
+      const cfg = MODELS_CFG[id];
+      if (!actor || !cfg) return;
+      const hex = (cfg.skinTints && cfg.skinTints[skinId]) || 0xffffff;
+      actor.root.traverse((obj) => {
+        if (obj.isMesh && obj.material && obj.material.color) obj.material.color.setHex(hex);
+      });
+    }
+
+    function updateLayout() {
+      const flowerEl = document.getElementById('flower');
+      const showBong = Boolean(charEnabledMap.bong);
+      flowerEl.style.display = showBong ? 'block' : 'none';
+      flowerEl.style.left = `${Math.round((charXRatioMap.bong ?? 0.14) * 100)}%`;
+
+      const plateBong = document.getElementById('plate-bong');
+      if (plateBong) {
+        plateBong.style.display = showBong ? 'block' : 'none';
+        plateBong.style.left = `${Math.round((charXRatioMap.bong ?? 0.14) * 100)}%`;
+      }
+
+      for (const [id, actor] of Object.entries(actors)) {
+        const show = Boolean(charEnabledMap[id]);
+        actor.root.visible = show;
+        const ratio = charXRatioMap[id] ?? MODELS_CFG[id].xRatio;
+        actor.targetX = xRatioToWorldX(ratio);
+        const plate = document.getElementById('plate-' + id);
+        if (plate) {
+          plate.style.display = show ? 'block' : 'none';
+          plate.style.left = `${Math.round(ratio * 100)}%`;
+        }
+      }
+    }
 
     function playClip(id, emotion) {
       const actor = actors[id];
@@ -246,10 +210,8 @@
       const clipName = cfg.clips[emotion] || cfg.clips.IDLE || 'Idle';
       const nextAction = actor.actions[clipName] || Object.values(actor.actions)[0];
       if (!nextAction || actor.currentAction === nextAction) return;
-      if (actor.currentAction) {
-        actor.currentAction.fadeOut(0.25);
-      }
-      nextAction.reset().fadeIn(0.25).play();
+      if (actor.currentAction) actor.currentAction.fadeOut(0.22);
+      nextAction.reset().fadeIn(0.22).play();
       actor.currentAction = nextAction;
     }
 
@@ -258,29 +220,22 @@
         try {
           const gltf = await loader.loadAsync(cfg.url);
           const root = gltf.scene;
-          root.position.set(cfg.x, cfg.y, 0);
+          const worldX = xRatioToWorldX(cfg.xRatio);
+          root.position.set(worldX, cfg.y, 0);
           root.scale.setScalar(cfg.scale);
           scene.add(root);
 
           const mixer = new THREE.AnimationMixer(root);
           const actions = {};
-          for (const clip of gltf.animations) {
-            actions[clip.name] = mixer.clipAction(clip);
-          }
+          for (const clip of gltf.animations) actions[clip.name] = mixer.clipAction(clip);
 
           actors[id] = {
-            root,
-            mixer,
-            actions,
-            currentAction: null,
-            baseScale: cfg.scale,
-            baseY: cfg.y,
-            isSpeaking: false,
-            emotion: 'IDLE'
+            root, mixer, actions, currentAction: null,
+            baseScale: cfg.scale, baseY: cfg.y, targetX: worldX,
+            isSpeaking: false, emotion: 'IDLE', activeSkin: 'default'
           };
           playClip(id, 'IDLE');
 
-          // Tự động gắn củ cà rốt vào đúng xương 'RightHand' của Thỏ Cà Rốt
           if (id === 'tho') {
             const rightHand = root.getObjectByName('RightHand');
             if (rightHand) {
@@ -291,31 +246,62 @@
                 carrot.position.set(0.06, 0.08, 0.04);
                 carrot.rotation.set(0.2, 0, -0.35);
                 rightHand.add(carrot);
-              } catch (err) {
-                console.warn('Chưa tải được carrot_optimized.glb:', err);
-              }
+              } catch (_e) {}
             }
           }
         } catch (err) {
-          console.warn(`Chưa tải được model ${id} (${cfg.url}):`, err);
+          console.warn(`Chưa tải được model ${id}:`, err);
         }
       }
+      updateLayout();
     }
 
-    // =========================================================================
-    // 5. ĐỒNG BỘ SỰ KIỆN TỪ live_director_bridge.py (app.py) & PHÁT ÂM THANH
-    // =========================================================================
+    // Kéo-thả vị trí trực tiếp
+    let draggingId = null;
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!freeDragEnabled) return;
+      const ratio = e.clientX / window.innerWidth;
+      let nearest = null, minDist = 0.14;
+      ['bong', 'rong', 'ho', 'tho'].forEach((id) => {
+        if (!charEnabledMap[id]) return;
+        const d = Math.abs((charXRatioMap[id] ?? 0.5) - ratio);
+        if (d < minDist) { minDist = d; nearest = id; }
+      });
+      if (nearest) { draggingId = nearest; canvas.style.cursor = 'grabbing'; }
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!draggingId) return;
+      charXRatioMap[draggingId] = Math.max(0.08, Math.min(0.92, e.clientX / window.innerWidth));
+      updateLayout();
+    });
+    window.addEventListener('pointerup', async () => {
+      if (!draggingId) return;
+      const id = draggingId;
+      const x_ratio = Number(charXRatioMap[id].toFixed(2));
+      draggingId = null;
+      canvas.style.cursor = freeDragEnabled ? 'grab' : 'default';
+      try {
+        await fetch('/api/multi_update_character', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, x_ratio })
+        });
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'charDragged', id, x_ratio }, '*');
+        }
+      } catch (_e) {}
+    });
+
     let targetFps = 30;
     let isPlayingTurn = false;
     let lastEventSeq = 0;
+    let lastStopSeq = 0;
+    let previewBubbleTimer = null;
     const audioPlayer = new Audio();
+    if (IS_MIRROR) audioPlayer.muted = true;
 
     function showBubble(speakerId, speakerName, text) {
       const box = document.getElementById('bubble-manga');
-      if (!SHOW_CAPTIONS || !text) {
-        box.classList.remove('visible');
-        return;
-      }
+      if (!SHOW_CAPTIONS || !text) { box.classList.remove('visible'); return; }
       box.style.backgroundColor = BUBBLE_COLORS[speakerId] || '#ffffff';
       document.getElementById('bubble-speaker').textContent = speakerName || speakerId;
       document.getElementById('bubble-text').textContent = text;
@@ -323,7 +309,9 @@
     }
 
     function setSpeakingState(speakerId, emotion, reactions = {}) {
-      // Bé Gián Hoa
+      document.querySelectorAll('.name-plate').forEach((el) => {
+        el.classList.toggle('active', el.id === 'plate-' + speakerId);
+      });
       const flowerEl = document.getElementById('flower');
       flowerEl.classList.toggle('speaking', speakerId === 'bong');
       if (flowerChar && typeof flowerChar.setAction === 'function') {
@@ -331,49 +319,97 @@
         else if (reactions.bong) flowerChar.setAction(reactions.bong);
         else flowerChar.setAction('IDLE');
       }
-
-      // 3 nhân vật 3D
       for (const [id, actor] of Object.entries(actors)) {
         actor.isSpeaking = id === speakerId;
-        if (id === speakerId) {
-          playClip(id, emotion || 'TALK');
-        } else if (reactions[id]) {
-          playClip(id, reactions[id]);
-        } else {
-          playClip(id, 'IDLE');
-        }
+        if (id === speakerId) playClip(id, emotion || 'TALK');
+        else if (reactions[id]) playClip(id, reactions[id]);
+        else playClip(id, 'IDLE');
       }
     }
+
+    function executePanicStop() {
+      try { audioPlayer.pause(); audioPlayer.currentTime = 0; } catch (_e) {}
+      isPlayingTurn = false;
+      setSpeakingState(null, 'IDLE', {});
+      showBubble(null, '', '');
+    }
+
+    function applyStatePayload(st) {
+      if (!st) return;
+      if (st.stage) {
+        if (st.stage.fps) targetFps = st.stage.fps;
+        freeDragEnabled = Boolean(st.stage.free_drag);
+        if (!draggingId) canvas.style.cursor = freeDragEnabled ? 'grab' : 'default';
+        if (typeof st.stage.stop_seq === 'number' && st.stage.stop_seq > lastStopSeq) {
+          lastStopSeq = st.stage.stop_seq;
+          executePanicStop();
+        }
+      }
+      (st.characters || []).forEach((c) => {
+        charEnabledMap[c.id] = Boolean(c.enabled);
+        if (!draggingId && c.stage && typeof c.stage.x_ratio === 'number') {
+          charXRatioMap[c.id] = c.stage.x_ratio;
+        }
+        if (c.id === 'bong') {
+          const skin = c.renderer && c.renderer.active_skin;
+          if (flowerChar && skin && typeof flowerChar.setPalette === 'function') flowerChar.setPalette(skin);
+          if (c.stage && typeof c.stage.scale === 'number') {
+            document.getElementById('flower').style.width = `${Math.round(22 * c.stage.scale)}vw`;
+          }
+        } else if (actors[c.id]) {
+          if (c.stage && typeof c.stage.scale === 'number') actors[c.id].baseScale = c.stage.scale;
+          const skin = c.renderer && c.renderer.active_skin;
+          if (skin && actors[c.id].activeSkin !== skin) {
+            actors[c.id].activeSkin = skin;
+            applySkinTint(c.id, skin);
+          }
+        }
+      });
+      updateLayout();
+    }
+
+    async function syncStateOnly() {
+      const stRes = await fetch('/api/multi_state', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+      });
+      if (!stRes.ok) return null;
+      const st = await stRes.json();
+      applyStatePayload(st);
+      return st;
+    }
+
+    // Kết nối SSE thời gian thực nếu app.py đã bật /api/multi/events (tự fallback về polling nếu chưa)
+    try {
+      const es = new EventSource('/api/multi/events');
+      es.addEventListener('state', (e) => {
+        try { applyStatePayload(JSON.parse(e.data)); } catch (_err) {}
+      });
+      es.addEventListener('panic_stop', (e) => {
+        try {
+          const d = JSON.parse(e.data);
+          if (d.stop_seq) lastStopSeq = d.stop_seq;
+        } catch (_err) {}
+        executePanicStop();
+      });
+    } catch (_e) {}
 
     async function pollNextTurn() {
       if (isPlayingTurn) return;
       try {
-        // Đồng bộ FPS & bật/tắt nhân vật từ Bàn điều khiển
-        const stRes = await fetch('/api/multi_state', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Bong-Hoa': '1' }, body: '{}' });
-        if (stRes.ok) {
-          const st = await stRes.json();
-          if (st.stage && st.stage.fps) targetFps = st.stage.fps;
-          (st.characters || []).forEach(c => {
-            if (c.id === 'bong') {
-              document.getElementById('flower').style.display = c.enabled ? 'block' : 'none';
-            } else if (actors[c.id]) {
-              actors[c.id].root.visible = Boolean(c.enabled);
-            }
-          });
-          // Cửa sổ mirror=1 chỉ đọc latest_event để đồng bộ hình + phụ đề, không lấy trùng hàng đợi
-          if (IS_MIRROR) {
-            const ev = st.pipeline && st.pipeline.latest_event;
-            if (ev && ev.event_seq !== lastEventSeq) {
-              lastEventSeq = ev.event_seq;
-              setSpeakingState(ev.speaker, ev.emotion, ev.reactions || {});
-              showBubble(ev.speaker, ev.speaker_name, ev.text);
-            }
-            return;
+        const st = await syncStateOnly();
+        if (st && IS_MIRROR) {
+          const ev = st.pipeline && st.pipeline.latest_event;
+          if (ev && ev.event_seq !== lastEventSeq) {
+            lastEventSeq = ev.event_seq;
+            setSpeakingState(ev.speaker, ev.emotion, ev.reactions || {});
+            showBubble(ev.speaker, ev.speaker_name, ev.text);
           }
+          return;
         }
 
-        // Cửa sổ chính (không có mirror=1) lấy lượt thoại tiếp theo & phát âm thanh
-        const res = await fetch('/api/multi_next_playback', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Bong-Hoa': '1' }, body: '{}' });
+        const res = await fetch('/api/multi_next_playback', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+        });
         if (!res.ok) return;
         const data = await res.json();
         const ev = data.event;
@@ -383,18 +419,20 @@
         setSpeakingState(ev.speaker, ev.emotion, ev.reactions || {});
         showBubble(ev.speaker, ev.speaker_name, ev.text);
 
-        if (ev.audio_url) {
+        if (ev.audio_url && !IS_MIRROR) {
           audioPlayer.src = ev.audio_url;
-          await new Promise(resolve => {
+          await new Promise((resolve) => {
             audioPlayer.onended = resolve;
             audioPlayer.onerror = resolve;
             audioPlayer.play().catch(resolve);
           });
         } else {
-          await new Promise(r => setTimeout(r, Math.max(1800, (ev.text || '').length * 55)));
+          await new Promise((r) => setTimeout(r, Math.max(1800, (ev.text || '').length * 55)));
         }
 
-        await new Promise(r => setTimeout(r, ev.pause_ms || 300));
+        if (!isPlayingTurn) return; // Đã bị ngắt bởi Panic Stop
+        await new Promise((r) => setTimeout(r, ev.pause_ms || 300));
+        if (!isPlayingTurn) return;
         setSpeakingState(null, 'IDLE', {});
         showBubble(null, '', '');
         isPlayingTurn = false;
@@ -403,14 +441,26 @@
       }
     }
 
+    window.addEventListener('message', (ev) => {
+      const msg = ev.data;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type === 'setBg') applyBg(msg.bg);
+      if (msg.type === 'refreshState') syncStateOnly().catch(() => {});
+      if (msg.type === 'panicStop') executePanicStop();
+      if (msg.type === 'previewAction') {
+        setSpeakingState(msg.speaker, msg.emotion, {});
+        showBubble(msg.speaker, msg.speakerName || msg.speaker, msg.text);
+        clearTimeout(previewBubbleTimer);
+        previewBubbleTimer = setTimeout(() => {
+          if (!isPlayingTurn) { setSpeakingState(null, 'IDLE', {}); showBubble(null, '', ''); }
+        }, 3000);
+      }
+    });
+
     setInterval(pollNextTurn, 500);
 
-    // =========================================================================
-    // 6. VÒNG LẶP RENDER CÓ GIỚI HẠN FPS TÙY CHỈNH (24 / 30 / 60 FPS)
-    // =========================================================================
     const clock = new THREE.Clock();
     let lastRender = 0;
-
     function animate(now) {
       requestAnimationFrame(animate);
       if (now - lastRender < (1000 / targetFps) - 1.5) return;
@@ -418,20 +468,14 @@
 
       const delta = Math.min(clock.getDelta(), 0.1);
       const elapsed = clock.elapsedTime;
-
       for (const [id, actor] of Object.entries(actors)) {
         actor.mixer.update(delta);
-
-        // Hiệu ứng spotlight phóng to nhẹ người đang nói
         const desiredScale = actor.baseScale * (actor.isSpeaking ? 1.09 : 1.0);
         actor.root.scale.lerp(new THREE.Vector3(desiredScale, desiredScale, desiredScale), 0.14);
-
-        // Hiệu ứng bay lơ lửng cho Bé Rồng khi emotion === 'FLY'
         const flyOffset = (id === 'rong' && actor.emotion === 'FLY') ? (0.45 + Math.sin(elapsed * 4.2) * 0.12) : 0;
-        const desiredY = actor.baseY + flyOffset;
-        actor.root.position.y += (desiredY - actor.root.position.y) * 0.12;
+        actor.root.position.y += ((actor.baseY + flyOffset) - actor.root.position.y) * 0.12;
+        actor.root.position.x += (actor.targetX - actor.root.position.x) * 0.16;
       }
-
       renderer.render(scene, camera);
     }
 

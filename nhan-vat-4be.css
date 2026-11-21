@@ -1,0 +1,577 @@
+/* ============================================================================
+   nhan-vat-4be.css (v2) — Broadcast Console đồng bộ 100% tông Tím-Đào Bông Hoa Live
+   Khớp nền #130f1a, thẻ #1e1828, viền #352b44, nút chính đào ấm #ffc48c.
+   Bọc phạm vi hoàn toàn trong #pane-nhanvat để không ảnh hưởng 6 tab khác.
+   ============================================================================ */
+
+#pane-nhanvat {
+  --nv-bg: #130f1a;
+  --nv-card: #1e1828;
+  --nv-card-deep: #15101e;
+  --nv-border: #352b44;
+  --nv-border-hi: #524268;
+  --nv-text: #f7f2fb;
+  --nv-muted: #a99bbd;
+  --nv-peach: #ffc48c;
+  --nv-peach-hover: #ffd1a6;
+  --nv-peach-ink: #1a1224;
+  --nv-peach-soft: rgba(255, 196, 140, 0.14);
+  --nv-emerald: #34d399;
+  --nv-danger: #ef4444;
+  --nv-danger-soft: rgba(239, 68, 68, 0.16);
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--nv-text);
+}
+
+#pane-nhanvat * { box-sizing: border-box; }
+
+#pane-nhanvat .nv-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 1220px;
+  margin: 0 auto;
+}
+
+/* --- Compact Broadcast Top Bar (No bloated marketing text) --- */
+#pane-nhanvat .nv-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--nv-card);
+  border: 1px solid var(--nv-border);
+  border-radius: 16px;
+  padding: 10px 14px;
+}
+
+#pane-nhanvat .nv-health-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#pane-nhanvat .nv-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--nv-emerald);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
+  display: inline-block;
+}
+
+#pane-nhanvat .nv-live-dot.warn {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.75);
+}
+
+#pane-nhanvat .nv-metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--nv-card-deep);
+  border: 1px solid var(--nv-border);
+  font-size: 11px;
+  font-weight: 700;
+  color: #e5dcf0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+#pane-nhanvat .nv-metric-pill strong {
+  color: var(--nv-peach);
+}
+
+#pane-nhanvat .nv-topbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#pane-nhanvat .nv-pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--nv-card-deep);
+  border: 1px solid var(--nv-border);
+  border-radius: 11px;
+  padding: 3px;
+}
+
+#pane-nhanvat .nv-pill-label {
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nv-muted);
+}
+
+#pane-nhanvat .nv-pill-btn {
+  border: 0;
+  background: transparent;
+  color: #cbbfe0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+#pane-nhanvat .nv-pill-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 196, 140, 0.1);
+}
+
+#pane-nhanvat .nv-pill-btn.active {
+  background: var(--nv-peach);
+  color: var(--nv-peach-ink);
+}
+
+#pane-nhanvat .nv-panic-btn {
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  background: var(--nv-danger-soft);
+  color: #fecaca;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 13px;
+  border-radius: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.14s ease, transform 0.1s ease;
+}
+
+#pane-nhanvat .nv-panic-btn:hover {
+  background: var(--nv-danger);
+  color: #ffffff;
+}
+
+/* --- Main Stage Card --- */
+#pane-nhanvat .nv-stage-card {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid var(--nv-border);
+  overflow: hidden;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+
+#pane-nhanvat .nv-stage-card.bg-dark {
+  background: radial-gradient(circle at 50% 40%, #2a203b 0%, #191325 65%, #110d18 100%);
+}
+
+#pane-nhanvat .nv-stage-card.bg-chroma {
+  background: #00b140;
+}
+
+#pane-nhanvat .nv-stage-card.bg-checker {
+  background-color: #1a1524;
+  background-image:
+    linear-gradient(45deg, #261f34 25%, transparent 25%),
+    linear-gradient(-45deg, #261f34 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #261f34 75%),
+    linear-gradient(-45deg, transparent 75%, #261f34 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+}
+
+#pane-nhanvat .nv-stage-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px 6px;
+}
+
+#pane-nhanvat .nv-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+#pane-nhanvat .nv-preset-btn,
+#pane-nhanvat .nv-chip-btn {
+  border: 1px solid var(--nv-border);
+  background: rgba(21, 16, 30, 0.88);
+  color: #e4dbf2;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+#pane-nhanvat .nv-preset-btn:hover,
+#pane-nhanvat .nv-chip-btn:hover {
+  border-color: var(--nv-peach);
+  color: #ffffff;
+}
+
+#pane-nhanvat .nv-preset-btn.active {
+  background: var(--nv-peach);
+  border-color: var(--nv-peach);
+  color: var(--nv-peach-ink);
+}
+
+#pane-nhanvat .nv-chip-btn.drag-on {
+  border-color: var(--nv-peach);
+  background: var(--nv-peach-soft);
+  color: var(--nv-peach);
+}
+
+#pane-nhanvat .nv-stage-viewport {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  overflow: hidden;
+}
+
+#pane-nhanvat .nv-stage-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+}
+
+#pane-nhanvat .nv-stage-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(19, 15, 26, 0.78);
+  border: 1px solid var(--nv-border);
+  color: var(--nv-muted);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+/* --- Speech & Comment Bar --- */
+#pane-nhanvat .nv-speak-bar {
+  margin: 6px 14px 14px;
+  background: rgba(19, 15, 26, 0.9);
+  border: 1px solid var(--nv-border);
+  border-radius: 14px;
+  padding: 9px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+#pane-nhanvat .nv-select,
+#pane-nhanvat .nv-input {
+  background: #140f1c;
+  border: 1px solid var(--nv-border-hi);
+  border-radius: 10px;
+  padding: 8px 11px;
+  font-size: 12px;
+  color: var(--nv-text);
+  outline: none;
+}
+
+#pane-nhanvat .nv-select {
+  font-weight: 700;
+  color: var(--nv-peach);
+}
+
+#pane-nhanvat .nv-input {
+  flex: 1 1 260px;
+  min-width: 180px;
+}
+
+#pane-nhanvat .nv-input:focus,
+#pane-nhanvat .nv-select:focus {
+  border-color: var(--nv-peach);
+}
+
+#pane-nhanvat .nv-btn-primary {
+  border: 0;
+  background: var(--nv-peach);
+  color: var(--nv-peach-ink);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s ease;
+}
+
+#pane-nhanvat .nv-btn-primary:hover {
+  background: var(--nv-peach-hover);
+}
+
+#pane-nhanvat .nv-btn-secondary {
+  border: 1px solid var(--nv-border-hi);
+  background: #271f36;
+  color: var(--nv-text);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+#pane-nhanvat .nv-btn-secondary:hover {
+  border-color: var(--nv-peach);
+  background: #312744;
+}
+
+/* --- Bottom 2-Column Studio Grid --- */
+#pane-nhanvat .nv-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 14px;
+}
+
+@media (max-width: 960px) {
+  #pane-nhanvat .nv-bottom-grid { grid-template-columns: 1fr; }
+  #pane-nhanvat .nv-stage-viewport { height: 300px; }
+}
+
+#pane-nhanvat .nv-panel {
+  background: var(--nv-card);
+  border: 1px solid var(--nv-border);
+  border-radius: 16px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#pane-nhanvat .nv-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#pane-nhanvat .nv-section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--nv-peach);
+}
+
+#pane-nhanvat .nv-char-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: var(--nv-card-deep);
+  border: 1px solid var(--nv-border);
+  font-size: 12px;
+}
+
+#pane-nhanvat .nv-switch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#pane-nhanvat .nv-switch-label input {
+  accent-color: var(--nv-peach);
+  width: 15px;
+  height: 15px;
+}
+
+/* --- Action Grid with Hotkey Badges [1]-[8] --- */
+#pane-nhanvat .nv-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  #pane-nhanvat .nv-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+#pane-nhanvat .nv-action-card {
+  position: relative;
+  text-align: left;
+  background: var(--nv-card-deep);
+  border: 1px solid var(--nv-border);
+  border-radius: 11px;
+  padding: 10px 10px 9px;
+  cursor: pointer;
+  color: var(--nv-text);
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+}
+
+#pane-nhanvat .nv-action-card:hover {
+  border-color: var(--nv-peach);
+  background: #251d33;
+  transform: translateY(-1px);
+}
+
+#pane-nhanvat .nv-action-card.active {
+  border-color: var(--nv-peach);
+  background: var(--nv-peach-soft);
+  box-shadow: 0 0 0 1px rgba(255, 196, 140, 0.35);
+}
+
+#pane-nhanvat .nv-hotkey {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--nv-muted);
+  background: rgba(53, 43, 68, 0.7);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+
+#pane-nhanvat .nv-action-name {
+  font-size: 12px;
+  font-weight: 700;
+  padding-right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#pane-nhanvat .nv-action-code {
+  margin-top: 4px;
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--nv-muted);
+}
+
+/* --- Skins, Sliders & Anti-Echo OBS Box --- */
+#pane-nhanvat .nv-skin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#pane-nhanvat .nv-skin-btn {
+  border: 1px solid var(--nv-border);
+  background: var(--nv-card-deep);
+  color: #d7cce8;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.14s ease;
+}
+
+#pane-nhanvat .nv-skin-btn:hover {
+  border-color: var(--nv-peach);
+  color: #ffffff;
+}
+
+#pane-nhanvat .nv-skin-btn.active {
+  border-color: var(--nv-peach);
+  background: var(--nv-peach-soft);
+  color: var(--nv-peach);
+}
+
+#pane-nhanvat .nv-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+#pane-nhanvat .nv-slider-label {
+  color: var(--nv-muted);
+  width: 58px;
+  flex-shrink: 0;
+}
+
+#pane-nhanvat .nv-slider {
+  flex: 1;
+  accent-color: var(--nv-peach);
+  cursor: pointer;
+}
+
+#pane-nhanvat .nv-slider-val {
+  width: 44px;
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--nv-peach);
+  font-weight: 700;
+}
+
+#pane-nhanvat .nv-divider {
+  height: 1px;
+  background: var(--nv-border);
+  margin: 1px 0;
+}
+
+#pane-nhanvat .nv-obs-box {
+  background: var(--nv-card-deep);
+  border: 1px solid var(--nv-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+}
+
+#pane-nhanvat .nv-obs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--nv-muted);
+  font-weight: 700;
+}
+
+#pane-nhanvat .nv-obs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#pane-nhanvat .nv-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9999;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #231b30;
+  border: 1px solid var(--nv-peach);
+  color: var(--nv-text);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.48);
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#pane-nhanvat .nv-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
