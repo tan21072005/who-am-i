@@ -74,8 +74,11 @@
     el("episode-minutes").disabled = !edit;
     el("episodes").disabled = !edit || dirty || !hasText();
     el("episode").disabled = sending;
-    el("prepare-episode").disabled = !edit || dirty || episode() === null || !hasText();
-    el("start-episode").disabled = !canStart || episode() === null;
+    const isAll = episode() === null;
+    el("prepare-episode").textContent = isAll ? "Chuẩn bị toàn bộ kịch bản" : `Chuẩn bị Tập ${episode() + 1}`;
+    el("start-episode").textContent = isAll ? "Phát toàn bộ kịch bản" : `Phát Tập ${episode() + 1} trong bản lưu`;
+    el("prepare-episode").disabled = !edit || dirty || !hasText();
+    el("start-episode").disabled = !canStart;
     el("start").disabled = !canStart;
     el("from").disabled = !canStart || !savedPlan.lines[index()];
     for (const id of ["prepare", "retell", "prepare-chapter"]) {
@@ -246,8 +249,8 @@
   }
   pane.addEventListener("bong-document-excerpt", event => void run("from-document", event.detail));
   el("episodes").onclick = () => void run("episodes", {minutes: Number(el("episode-minutes").value)});
-  el("prepare-episode").onclick = () => void run("prepare", {episode: episode()});
-  el("start-episode").onclick = () => void run("start", {episode: episode()});
+  el("prepare-episode").onclick = () => void run("prepare", episode() === null ? {} : {episode: episode()});
+  el("start-episode").onclick = () => void run("start", episode() === null ? {} : {episode: episode()});
   el("from").onclick = () => void run("start", {slot: index()});
   el("retell").onclick = () => void run("retell", {slot: index()});
   el("prepare-chapter").onclick = () => void run("prepare", {slot: index(), chapter: true, episode: episode()});

@@ -581,7 +581,7 @@ class Channel:
                     "palette": self.config["palette"], "mode": self.presentation.mode,
                     "live": self.live.public(LIVE_LABELS, self.paused),
                     "visual": dict(visual, age=round((now - visual["received"]) * 1000),
-                                   text=self.active["text"]) if synced else None,
+                                   text=visual.get("text") or self.active["text"]) if synced else None,
                 }
             ready = body.get("ready") is True
             if self.renderer is None or (not self.ready and ready and not self.active):
@@ -647,6 +647,7 @@ class Channel:
                         "received": time.monotonic(), "elapsed": elapsed, "duration": duration,
                         "mouth": mouth, "voiced": visual.get("voiced") is True,
                         "silentTalk": visual.get("silentTalk") is True,
+                        "text": visual.get("text") or self.active.get("text", ""),
                     }
             # The next poll confirms delivery. If its response was lost, offer the same ID.
             if ready and self.active and body.get("playing") != self.active["id"]:

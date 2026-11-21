@@ -5,6 +5,44 @@ const mirror = parameters.get("mirror") === "1";
 const voice = mirror ? null : new BongHoa.Voice(flower);
 const unlock = document.getElementById("unlock");
 const captionNode = document.getElementById("caption");
+const captionTextNode = document.getElementById("caption-text") || captionNode;
+const captionPageNode = document.getElementById("caption-page");
+const WORD_LIMIT = Math.max(4, Math.min(60, Number(parameters.get("words")) || 14));
+const bubbleStyle = parameters.get("bubble") || "pastel";
+if (captionNode && bubbleStyle) captionNode.classList.add("bubble-" + bubbleStyle);
+if (captionNode && parameters.get("pos") === "top") captionNode.classList.add("pos-top");
+let currentCaptionText = "";
+
+function splitCaption(text, limit = 14) {
+  text = (text || "").trim();
+  if (!text) return [];
+  const words = text.split(/\s+/);
+  if (words.length <= limit) return [text];
+
+  const frames = [];
+  let currentWords = [];
+
+  for (let i = 0; i < words.length; i++) {
+    currentWords.push(words[i]);
+    const w = words[i];
+    const isPunct = /[.!?:;,…]$/.test(w);
+    const count = currentWords.length;
+
+    if (count >= limit || (count >= Math.max(6, limit - 4) && isPunct)) {
+      frames.push(currentWords.join(" "));
+      currentWords = [];
+    }
+  }
+
+  if (currentWords.length > 0) {
+    if (frames.length > 0 && currentWords.length <= 4) {
+      frames[frames.length - 1] += " " + currentWords.join(" ");
+    } else {
+      frames.push(currentWords.join(" "));
+    }
+  }
+  return frames;
+}
 const card = document.getElementById("live-card");
 const cardTitle = document.getElementById("live-card-title");
 const cardTally = document.getElementById("live-card-tally");
@@ -88,21 +126,68 @@ function clearPlayback() {
   playing = null;
   speaking = false;
   ack = null;
-  voice.stop();
+  if (voice) voice.stop();
   captionNode.hidden = true;
+  currentCaptionText = "";
 }
 
 async function playJob(job) {
   playing = job.id;
   speaking = Boolean(job.audio || job.demo);
-  captionNode.textContent = job.text || "";
+  const frames = splitCaption(job.text, WORD_LIMIT);
+  const totalWords = frames.reduce((sum, f) => sum + f.split(/\s+/).length, 0) || 1;
+  const frameWeights = frames.map(f => f.split(/\s+/).length / totalWords);
+  let activeFrame = -1;
+
+  function setCaptionFrame(idx) {
+    if (idx === activeFrame || idx < 0 || idx >= frames.length) return;
+    activeFrame = idx;
+    currentCaptionText = frames[idx];
+    captionTextNode.textContent = frames[idx];
+    if (captionPageNode) {
+      if (frames.length > 1) {
+        captionPageNode.textContent = `${idx + 1}/${frames.length}`;
+        captionPageNode.hidden = false;
+      } else {
+        captionPageNode.hidden = true;
+      }
+    }
+  }
+
+  setCaptionFrame(0);
   captionNode.hidden = parameters.get("captions") !== "1" || !job.text;
+
+  let captionTimer = null;
+  if (frames.length > 1) {
+    captionTimer = setInterval(() => {
+      if (!playing || playing !== job.id) {
+        clearInterval(captionTimer);
+        return;
+      }
+      const elapsed = performance.now() - flower.start;
+      const duration = Math.max(1, flower.end - flower.start);
+      const progress = Math.max(0, Math.min(1, elapsed / duration));
+      let acc = 0;
+      let target = frames.length - 1;
+      for (let i = 0; i < frames.length; i++) {
+        acc += frameWeights[i];
+        if (progress < acc) {
+          target = i;
+          break;
+        }
+      }
+      setCaptionFrame(target);
+    }, 75);
+  }
+
   let failed = null;
   try { await voice.play(job); } catch (error) { failed = error.message; }
+  clearInterval(captionTimer);
   if (playing !== job.id) return;
   playing = null;
   speaking = false;
   captionNode.hidden = true;
+  currentCaptionText = "";
   ack = {id: job.id, failed};
 }
 
@@ -120,7 +205,7 @@ function visualSnapshot() {
     const track = voice.mouthTracks.find(part => time >= part.start && time < part.start + part.duration);
     return track ? Math.round(100 * Math.max(0, Math.min(1, track.levelAt(time - track.start)))) : 0;
   });
-  return {elapsed, duration, mouth, voiced: flower.voiceOn, silentTalk: flower.silentTalk};
+  return {elapsed, duration, mouth, voiced: flower.voiceOn, silentTalk: flower.silentTalk, text: currentCaptionText || ""};
 }
 
 function showMirror(visual) {
@@ -144,7 +229,7 @@ function showMirror(visual) {
     const sample = Math.floor((performance.now() - now + visual.age) / MOUTH_SAMPLE_MS);
     return (visual.mouth[sample] ?? 0) / 100;
   };
-  captionNode.textContent = visual.text;
+  captionTextNode.textContent = visual.text || "";
   captionNode.hidden = parameters.get("captions") !== "1" || !visual.text;
 }
 

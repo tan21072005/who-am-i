@@ -4,16 +4,186 @@ main { width: 100%; height: 100%; display: grid; place-items: center; position: 
 canvas { display: block; width: min(100vw, 90.56vh); height: auto; }
 #caption {
   position: absolute;
-  bottom: 5%;
-  max-width: 88%;
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: clamp(280px, 86vw, 450px);
   box-sizing: border-box;
-  padding: .44em .72em;
-  border-radius: 10px;
-  color: #fff4df;
-  background: #281e2ae8;
   text-align: center;
-  font: 650 clamp(16px, 3.7vmin, 36px)/1.32 system-ui, sans-serif;
+  z-index: 100;
+  pointer-events: none;
+  animation: bubblePop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bubblePop {
+  0% { transform: translateX(-50%) scale(0.88); opacity: 0; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* Default / Pastel Theme (Ảnh 2 & 3: Cute pastel với đường chỉ khâu đứt đoạn) */
+#caption.bubble-pastel .bubble-inner,
+#caption:not([class*="bubble-"]) .bubble-inner {
+  position: relative;
+  background: #fff8f2;
+  border: 3.5px solid #2d2035;
+  border-radius: 24px;
+  padding: .58em 1.05em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.18);
+  outline: 2px dashed rgba(225, 160, 185, 0.85);
+  outline-offset: -6px;
+}
+
+#caption.bubble-pastel #caption-text,
+#caption:not([class*="bubble-"]) #caption-text {
+  color: #2b1b30;
+  font: 750 clamp(16px, 3.8vmin, 26px)/1.38 "Baloo 2", "Quicksand", system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
   overflow-wrap: anywhere;
+}
+
+/* Comic / Pop-art Theme (Ảnh 1: Comic burst / Halftone pop) */
+#caption.bubble-comic .bubble-inner {
+  position: relative;
+  background: #fffef0;
+  border: 4px solid #141414;
+  border-radius: 18px;
+  padding: .62em 1.1em;
+  box-shadow: 6px 6px 0px #ffd700, 8px 8px 0px #141414;
+}
+
+#caption.bubble-comic #caption-text {
+  color: #121212;
+  font: 800 clamp(16px, 3.9vmin, 27px)/1.32 "Bangers", "Impact", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+/* Cloud Theme (Ảnh 2 & 3: Mây bồng bềnh) */
+#caption.bubble-cloud .bubble-inner {
+  position: relative;
+  background: #f4efff;
+  border: 3.5px solid #362947;
+  border-radius: 30px 30px 24px 24px;
+  padding: .62em 1.1em;
+  box-shadow: 0 8px 24px rgba(70, 40, 90, 0.28);
+  outline: 2px dashed rgba(180, 150, 225, 0.75);
+  outline-offset: -6px;
+}
+
+#caption.bubble-cloud #caption-text {
+  color: #27173e;
+  font: 750 clamp(16px, 3.8vmin, 26px)/1.38 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+/* Mint Theme */
+#caption.bubble-mint .bubble-inner {
+  position: relative;
+  background: #f0faf4;
+  border: 3.5px solid #1c3b2b;
+  border-radius: 22px;
+  padding: .6em 1.05em;
+  box-shadow: 0 8px 24px rgba(25, 55, 40, 0.28);
+  outline: 2px dashed rgba(130, 200, 160, 0.8);
+  outline-offset: -6px;
+}
+
+#caption.bubble-mint #caption-text {
+  color: #1a3325;
+  font: 750 clamp(16px, 3.8vmin, 26px)/1.38 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+/* Speech Bubble Tail (Mũi tên thoại trỏ lên hướng Bông khi bubble ở dưới) */
+.bubble-tail {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 14px solid #2d2035;
+}
+
+.bubble-tail::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: -9px;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 11px solid #fff8f2;
+}
+
+#caption.bubble-comic .bubble-tail {
+  border-bottom-color: #141414;
+}
+#caption.bubble-comic .bubble-tail::after {
+  border-bottom-color: #fffef0;
+}
+
+#caption.bubble-cloud .bubble-tail {
+  border-bottom-color: #362947;
+}
+#caption.bubble-cloud .bubble-tail::after {
+  border-bottom-color: #f4efff;
+}
+
+#caption.bubble-mint .bubble-tail {
+  border-bottom-color: #1c3b2b;
+}
+#caption.bubble-mint .bubble-tail::after {
+  border-bottom-color: #f0faf4;
+}
+
+/* Speech Bubble Tail khi bubble ở trên (pos=top) */
+#caption.pos-top {
+  bottom: auto;
+  top: 6%;
+}
+#caption.pos-top .bubble-tail {
+  top: auto;
+  bottom: -13px;
+  border-top: 14px solid #2d2035;
+  border-bottom: none;
+}
+#caption.pos-top .bubble-tail::after {
+  top: -15px;
+  border-top: 11px solid #fff8f2;
+  border-bottom: none;
+}
+#caption.pos-top.bubble-comic .bubble-tail {
+  border-top-color: #141414;
+}
+#caption.pos-top.bubble-comic .bubble-tail::after {
+  border-top-color: #fffef0;
+}
+
+/* Page indicator (1/3, 2/3) */
+.bubble-page {
+  position: absolute;
+  bottom: -11px;
+  right: 16px;
+  background: #2d2035;
+  color: #fff;
+  font: 750 11px/1.35 system-ui, sans-serif;
+  padding: 1.5px 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.5px;
+}
+
+#caption.bubble-comic .bubble-page {
+  background: #ffd700;
+  color: #141414;
+  border: 2px solid #141414;
+  font-weight: 800;
 }
 #unlock {
   position: absolute;
