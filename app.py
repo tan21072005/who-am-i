@@ -1585,7 +1585,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "same-origin")
-            csp = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: data:; base-uri 'none'; frame-ancestors *"
+            csp = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data: https:; worker-src 'self' blob:; base-uri 'none'; frame-ancestors 'self' *"
             self.send_header("Content-Security-Policy", csp)
             self.end_headers()
             self.wfile.write(data)
@@ -1695,6 +1695,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         content_type = {".html": "text/html", ".css": "text/css", ".js": "text/javascript"}[Path(name).suffix]
         self.send_payload(200, f"{content_type}; charset=utf-8", (ROOT / name).read_bytes())
+
+    def do_HEAD(self):
+        self.do_GET()
 
     def do_POST(self):
         endpoint = urlsplit(self.path).path
