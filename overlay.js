@@ -17,6 +17,7 @@ let currentCaptionPage = "";
 const isSetup = parameters.get("setup") === "1";
 let claimPrimary = false;
 let resultAccepted = true;
+let playing = null;
 
 function updateCaptionPreview() {
   if (!isSetup || playing) return;
@@ -72,7 +73,6 @@ const renderer = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.t
 let boot;
 let generation;
 let ready = false;
-let playing = null;
 let lastSeen = 0;
 let ack = null;
 let retries = 0;
