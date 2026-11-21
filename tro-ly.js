@@ -7,6 +7,7 @@
   const line = el("line");
   let revision = -1;
   let plan = {lines: [], chapters: [], flow: "timed", episodes: [0], joins: []};
+  let savedPlan = plan;
   let dirty = false;
   let sending = false;
   let polling = false;
@@ -52,12 +53,14 @@
     const running = state.mode === "running";
     const paused = state.mode === "paused";
     const story = plan.flow === "story";
-    const edit = revision >= 0 && !sending && !state.drafting && !state.preparing && !running && !paused;
+    const edit = revision >= 0 && !sending && !state.drafting && !state.preparing;
+    const canStart = !sending && !running && !paused && Boolean(state.id && savedPlan.lines.some(Boolean));
     for (const id of [...fields, "line", "save", "new", "duplicate", "library", "version", "import", "sheet"]) {
       el(id).disabled = !edit;
     }
     el("restore").disabled = !edit || !el("version").value;
-    el("generate").disabled = !edit || story;
+    el("generate").hidden = story;
+    el("generate").disabled = !edit;
     el("add").disabled = !edit || !story || plan.lines.length >= 6000;
     el("sheet").disabled = !edit || dirty;
     el("story-controls").hidden = !story;
@@ -66,10 +69,12 @@
     el("join").disabled = !edit || index() === 0 || plan.episodes.includes(index());
     el("episode-minutes").disabled = !edit;
     el("episodes").disabled = !edit || dirty || !hasText();
-    el("episode").disabled = running || paused || sending;
+    el("episode").disabled = sending;
     el("prepare-episode").disabled = !edit || dirty || episode() === null || !hasText();
-    el("start-episode").disabled = !edit || dirty || episode() === null || !hasText();
-    for (const id of ["prepare", "start", "from", "retell", "prepare-chapter"]) {
+    el("start-episode").disabled = !canStart || episode() === null;
+    el("start").disabled = !canStart;
+    el("from").disabled = !canStart || !savedPlan.lines[index()];
+    for (const id of ["prepare", "retell", "prepare-chapter"]) {
       el(id).disabled = !edit || dirty || !hasText();
     }
     for (const id of ["from", "retell", "prepare-chapter", "section-help", "add"]) el(id).hidden = !story;
@@ -78,13 +83,13 @@
     el("stop").disabled = sending || !(running || paused);
     el("prev").disabled = index() === 0;
     el("next").disabled = index() >= plan.lines.length - 1;
-    el("start").textContent = story ? (state.cursor > 0 && state.cursor < plan.lines.length ? "Kể tiếp" : "Kể từ đầu") : "Bắt đầu 30 phút";
-    el("play-help").textContent = story
-      ? "Bông kể nối tiếp. Câu chat sẵn sàng được phát giữa các đoạn. Tiến độ được lưu khi đoạn phát xong."
-      : "Mỗi phút tối đa một đoạn. Bông ưu tiên chat và bỏ qua mốc đã trôi.";
+    el("start").textContent = savedPlan.flow === "story"
+      ? (state.editorCursor > 0 && state.editorCursor < savedPlan.lines.length ? "Kể tiếp bản lưu" : "Kể bản đã lưu")
+      : "Phát bản đã lưu";
     const modes = {stopped: "Chưa chạy", running: "Đang chạy", paused: "Tạm dừng", done: "Đã phát xong"};
-    const progress = story ? `Đã kể ${state.cursor}/${plan.lines.length} đoạn` : "30:00";
-    el("clock").textContent = `${modes[state.mode]} · ${asClock(state.seconds)} / ${progress}`;
+    const progress = state.playbackFlow === "story" ? ` · Đã kể ${state.cursor}/${state.playbackTotal} đoạn` : "";
+    const title = state.playbackId ? " · " + (state.playbackTitle || "Kịch bản chưa đặt tên") : "";
+    el("clock").textContent = `${modes[state.mode]} · ${asClock(state.seconds)}${title}${progress}`;
     el("note").textContent = state.audioNote || state.note || "";
     paintChecks();
   }
@@ -113,7 +118,8 @@
     const previousEpisode = episode();
     state = result;
     if (!result.plan) return;
-    plan = result.plan;
+    savedPlan = result.plan;
+    plan = structuredClone(savedPlan);
     for (const key of fields) {
       if (el(key).type === "checkbox") el(key).checked = plan[key];
       else el(key).value = plan[key];
@@ -127,7 +133,7 @@
       return new Option(`Tập ${i + 1} · Đoạn ${start + 1}–${end}${chapter ? " · " + chapter.title : ""}`, i);
     });
     el("episode").replaceChildren(new Option("Toàn bộ kịch bản", ""), ...options);
-    const selected = result.episode ?? (previousId === result.id ? previousEpisode : null);
+    const selected = previousId === result.id ? previousEpisode : null;
     if (selected != null && selected < options.length) el("episode").value = String(selected);
     el("source").textContent = plan.source ? "Tài liệu nguồn · " + plan.source : "";
     el("library").replaceChildren(new Option("Chọn kịch bản", ""),
@@ -135,7 +141,7 @@
     el("library").value = result.id || "";
     el("version").replaceChildren(new Option("Chọn bản đã lưu", ""),
       ...result.versions.map(v => new Option(new Date(Number(v.slice(0, -6))).toLocaleString(), v)));
-    drawLines(previousId === result.id ? index() : Math.min(result.cursor, plan.lines.length - 1));
+    drawLines(previousId === result.id ? index() : Math.min(result.editorCursor ?? 0, plan.lines.length - 1));
   }
 
   function changed() {
@@ -176,7 +182,7 @@
     try {
       const selected = episode();
       const result = await requestApi("assistant", {operation: "status", episode: selected});
-      if (!sending && selected === episode() && result.revision === revision) apply(result);
+      if (!sending && selected === episode() && result.revision === revision) state = result;
       paint();
     } catch (error) { notify(error.message); }
   }
@@ -208,7 +214,7 @@
 
   async function run(op, detail = {}) {
     if (sending) return;
-    if (dirty && ["open", "new", "import", "restore"].includes(op) &&
+    if (dirty && ["open", "new", "import", "restore", "from-document"].includes(op) &&
         !confirm("Mở bản khác và bỏ các chỉnh sửa chưa lưu?")) {
       el("library").value = state.id || "";
       return;
@@ -220,7 +226,9 @@
       const payload = {operation: op, revision, ...detail};
       if (["generate", "save", "duplicate"].includes(op)) payload.plan = plan;
       if (op === "import" || op === "sheet") Object.assign(payload, await upload(op === "import" ? "document" : "csv"));
-      apply(await requestApi("assistant", payload));
+      const result = await requestApi("assistant", payload);
+      if (dirty && ["start", "stop", "pause", "resume"].includes(op)) state = result;
+      else apply(result);
       notify(op === "save" ? "Đã lưu kịch bản." : "");
     } catch (error) {
       notify(error.message);
@@ -231,6 +239,7 @@
   for (const op of ["save", "generate", "prepare", "start", "stop", "pause", "resume", "new", "duplicate", "import", "sheet"]) {
     el(op).onclick = () => void run(op);
   }
+  pane.addEventListener("bong-document-excerpt", event => void run("from-document", event.detail));
   el("episodes").onclick = () => void run("episodes", {minutes: Number(el("episode-minutes").value)});
   el("prepare-episode").onclick = () => void run("prepare", {episode: episode()});
   el("start-episode").onclick = () => void run("start", {episode: episode()});

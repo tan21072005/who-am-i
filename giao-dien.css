@@ -156,3 +156,11 @@ input[type=range] { padding: 0; accent-color: var(--hot); }
 .interaction-note { position: sticky; bottom: 8px; padding: 8px 12px; background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; }
 
 #drafts { max-height: 43vh; overflow-y: auto; overscroll-behavior: contain; }
+
+.assistant-player-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.assistant-player-header :is(h2, p), #pane-assistant p { margin: 0; }
+#pane-assistant p:empty { display: none; }
+.assistant-grid > *, .assistant-grid .panel { min-width: 0; }
+#doc-results article { padding: 12px 0; border-top: 1px solid currentColor; overflow-wrap: anywhere; }
+#doc-results article p { white-space: pre-wrap; }
+#doc-progress { width: 100%; }

@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import sqlite3
 import sys
 from threading import Condition, Thread, Timer
 import time
@@ -20,9 +21,10 @@ import unicodedata
 import webbrowser
 import wave
 from urllib.error import HTTPError
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 from urllib.request import Request, urlopen
 
+from kho_tai_lieu import DocumentStore
 from cai_dat_kenh import AUDIO_LIMIT, MODES, Presentation, audio_type
 from giong_noi import SAMPLE_TEXT, Speaker, SpeechError
 from tro_ly import Rundown, generate_lines, retell_lines
@@ -44,7 +46,7 @@ LIVE_LABELS = dict(zip(ACTIONS, (
 VOICES = {"vi-VN-HoaiMyNeural": "Hoài Mỹ", "vi-VN-NamMinhNeural": "Nam Minh"}
 STATIC = {
     "bang-dieu-khien.html", "THU-NHAN-VAT.html", "overlay.html", "overlay.css",
-    "tro-ly.js", "giao-dien.css", "cai-dat.js", "hieu-ung-data.js", "hieu-ung.js", "nhan-vat.js", "ket-noi.js", "thu.js", "overlay.js", "dieu-khien.js", "tuong-tac.js", "thiet-lap.js",
+    "tro-ly.js", "kho-tai-lieu.js", "giao-dien.css", "cai-dat.js", "hieu-ung-data.js", "hieu-ung.js", "nhan-vat.js", "ket-noi.js", "thu.js", "overlay.js", "dieu-khien.js", "tuong-tac.js", "thiet-lap.js",
 }
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 GOOGLE_MODELS = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -282,7 +284,9 @@ class Channel:
         settings_dir = settings_dir or ROOT / "sound-data" / str(config["port"])
         self.presentation = Presentation(settings_dir, ROOT / "effects", EFFECTS, ACTIONS)
         self.live = Interaction(settings_dir, ACTIONS, approved_text)
+        self.documents = DocumentStore(settings_dir)
         self.show = Rundown(settings_dir, approved_text)
+        self.playback = self.show.playback_copy(0)
         self.operator = OperatorSettings(settings_dir, config, VOICES)
         self.tiktok_settings = {key: self.operator.settings[key] for key in ("tiktok_enabled", "tiktok_username")}
         is_router = config.get("llm_provider") == "9router"
@@ -337,7 +341,7 @@ class Channel:
                     self.speaker = self.make_speaker()
                     self.last_provider = None
                     self.played_provider = None
-                    self.show.audio_note = ""
+                    self.playback.audio_note = ""
             elif op in ("record", "unrecord", "play_record"):
                 key = body.get("trigger")
                 faq = next((row for row in self.live.settings["faq"] if row["trigger"] == key), None)
@@ -377,12 +381,12 @@ class Channel:
             self.idle_since = None
             if self.active:
                 if "show_slot" in self.active:
-                    self.show.fail_playback("Nguồn phát đã đóng. Mở overlay rồi bấm Tiếp tục.")
+                    self.playback.fail_playback("Nguồn phát đã đóng. Mở overlay rồi bấm Tiếp tục.")
                 self.active = None
                 self.note = "Nguồn phát đã đóng."
         if self.active and now - self.active["started"] > PLAY_TIMEOUT:
             if "show_slot" in self.active:
-                self.show.fail_playback("Overlay chưa xác nhận đã phát hết đoạn. Bấm Tiếp tục để thử lại.")
+                self.playback.fail_playback("Overlay chưa xác nhận đã phát hết đoạn. Bấm Tiếp tục để thử lại.")
             self.active = None
             self.generation += 1
             self.note = "Hết thời gian phát câu. Đã chuyển sang câu tiếp theo."
@@ -446,12 +450,12 @@ class Channel:
                     self.played_provider = played["provider"]
                 if "show_slot" in played:
                     if ack.get("failed"):
-                        self.show.fail_playback("Overlay không phát được đoạn này. Kiểm tra nguồn rồi bấm Tiếp tục.")
+                        self.playback.fail_playback("Overlay không phát được đoạn này. Kiểm tra nguồn rồi bấm Tiếp tục.")
                     else:
                         try:
-                            self.show.finished(played["show_slot"])
+                            self.playback.finished(played["show_slot"])
                         except OSError:
-                            self.show.fail_playback("Không lưu được tiến độ. Kiểm tra quyền ghi rồi bấm Tiếp tục.")
+                            self.playback.fail_playback("Không lưu được tiến độ. Kiểm tra quyền ghi rồi bấm Tiếp tục.")
                 if ack.get("failed"):
                     self.note = {
                         "unlock": "Nguồn đang chặn âm thanh. Mở Interact trong OBS và bấm Bật âm thanh.",
@@ -459,22 +463,22 @@ class Channel:
                         "effect": "Hiệu ứng không phát được. Hãy thử file MP3 hoặc WAV khác.",
                     }.get(str(ack.get("failed")), "Nguồn chưa phát được âm thanh. Kiểm tra Browser Source.")
             self.maybe_idle()
-            slot = self.show.slot()
-            storytelling = slot is not None and self.show.plan["flow"] == "story"
+            slot = self.playback.slot()
+            storytelling = slot is not None and self.playback.plan["flow"] == "story"
             if self.jobs and any("show_slot" in job for job in self.jobs):
                 timed_busy = not storytelling and (self.incoming or self.live.poll or self.worker_busy)
                 self.jobs = deque(job for job in self.jobs if "show_slot" not in job or (
-                    job["show_slot"] == slot and job["show_token"] == self.show.token and not timed_busy))
+                    job["show_slot"] == slot and job["show_token"] == self.playback.token and not timed_busy))
             if ready and not self.paused and not self.active and self.jobs:
                 job = self.jobs[0]
-                if storytelling and not self.live.poll and self.show.story_has_turn(slot):
+                if storytelling and not self.live.poll and self.playback.story_has_turn(slot):
                     job = next((queued for queued in self.jobs if "show_slot" in queued), None)
                 if job is not None:
                     self.jobs.remove(job)
                     self.active = job
                     self.active["started"] = time.monotonic()
                     if storytelling and "show_slot" not in job:
-                        self.show.interludes += 1
+                        self.playback.interludes += 1
             visual = body.get("visual")
             if self.active and isinstance(visual, dict) and body.get("playing") == self.active["id"]:
                 elapsed = visual.get("elapsed")
@@ -531,8 +535,8 @@ class Channel:
             raise CommandError("Hành động không hợp lệ.")
         with self.cv:
             if action == "pause":
-                if self.show.mode == "running":
-                    self.show.control("pause")
+                if self.playback.mode == "running":
+                    self.playback.control("pause")
                 self.paused, self.auto = True, False
                 self.generation += 1
                 self.cv.notify_all()
@@ -663,9 +667,16 @@ class Channel:
                 raise InteractionError("Dùng nút Nhập CSV cho danh sách kịch bản.")
             else:
                 imported = document_segments(raw)
+        if op == "from-document":
+            excerpt = self.documents.excerpt(body.get("document"), body.get("ordinal"))
+            imported = document_segments(excerpt["body"])
+            name = excerpt["name"]
+            if excerpt["page"] is not None:
+                name += f" · trang {excerpt['page']}"
         with self.cv:
             self.prune()
             show = self.show
+            playback = self.playback
             episode = body.get("episode")
             if episode is not None:
                 try:
@@ -674,12 +685,10 @@ class Channel:
                     if op in ("start", "prepare"):
                         raise
                     episode = None
-            change_ops = ("new", "open", "duplicate", "restore", "import", "save", "generate", "retell", "episodes")
+            change_ops = ("new", "open", "duplicate", "restore", "import", "from-document", "save", "generate", "retell", "episodes")
             if op in change_ops:
-                if show.drafting or show.preparing or show.mode in ("running", "paused") or (
-                    self.active and "show_slot" in self.active
-                ):
-                    raise InteractionError("Kết thúc kịch bản và chờ đoạn đang nói phát xong trước khi sửa.")
+                if show.drafting or show.preparing:
+                    raise InteractionError("Kịch bản đang soạn hoặc tạo tiếng. Vui lòng chờ thao tác xong.")
                 if body.get("revision") != show.revision:
                     raise InteractionError("Kịch bản đã thay đổi. Hãy tải lại bảng điều khiển.")
             if op == "episodes":
@@ -694,10 +703,11 @@ class Channel:
                 show.save({**plan, "topic": (plan["topic"][:187] + " (bản sao)").strip()}, fresh=True, source=source)
             elif op == "restore":
                 show.restore(body.get("version"))
-            elif op == "import":
+            elif op in ("import", "from-document"):
                 lines, chapters = imported
                 filename = Path(name.replace(chr(92), "/")).name
-                plan = {**show.blank(), "topic": Path(filename).stem[:200], "flow": "story",
+                title = filename if op == "from-document" else Path(filename).stem
+                plan = {**show.blank(), "topic": title[:200], "flow": "story",
                         "lines": lines, "chapters": chapters, "source": filename[:200]}
                 show.save(plan, fresh=True, source=lines)
                 show.draft_note = f"Đã nhập {len(lines)} đoạn. Chọn đoạn để xem và chỉnh lời."
@@ -739,9 +749,9 @@ class Channel:
                     show.save(plan)
                     show.draft_note = "Đã lưu kịch bản."
             elif op == "prepare":
-                if (show.drafting or show.preparing or show.mode in ("running", "paused")
+                if (show.drafting or show.preparing
                         or body.get("revision") != show.revision or not any(show.plan["lines"])):
-                    raise InteractionError("Hãy lưu lời thoại và dừng kịch bản trước khi tạo tiếng.")
+                    raise InteractionError("Lưu lời thoại và chờ thao tác soạn hoặc tạo tiếng đang chạy hoàn thành.")
                 if not self.speaker.available:
                     raise InteractionError("Chưa có bộ giọng đọc. Kiểm tra mục Giọng & Âm thanh.")
                 start = body.get("slot", 0)
@@ -756,32 +766,45 @@ class Channel:
                 slots = [(i, show.plan["lines"][i]) for i in range(start, end) if show.plan["lines"][i]]
                 Thread(target=self.prepare_show_audio, args=(slots, self.speaker), daemon=True).start()
             elif op in ("start", "stop", "pause", "resume"):
-                if op in ("start", "resume") and (show.drafting or show.preparing or self.paused or not self.ready or not self.speaker.available):
-                    raise InteractionError("Chờ soạn xong, bật nguồn phát và giọng đọc, rồi bấm Chạy tiếp nếu Bàn LIVE đang dừng.")
+                if op in ("start", "resume") and (self.paused or not self.ready or not self.speaker.available):
+                    raise InteractionError("Bật âm thanh ở nguồn phát, kiểm tra bộ giọng và bấm Chạy tiếp nếu Bàn LIVE đang dừng.")
                 start = body.get("slot")
                 if op == "start":
                     if self.active and "show_slot" in self.active:
                         raise InteractionError("Chờ đoạn đang đọc phát xong.")
                     if start is not None and (type(start) is not int or not 0 <= start < len(show.plan["lines"])):
                         raise InteractionError("Vị trí bắt đầu không hợp lệ.")
-                show.control(op, start, episode=episode)
+                    if playback.mode in ("running", "paused"):
+                        raise InteractionError("Hãy kết thúc kịch bản đang phát trước khi phát bản khác.")
+                    if not show.script_id or body.get("revision") != show.revision:
+                        raise InteractionError("Chọn kịch bản đã lưu và thử lại.")
+                    playback = show.playback_copy(playback.token)
+                    playback.control("start", start, episode=episode)
+                    self.playback = playback
+                    show.idle_armed = False
+                else:
+                    playback.control(op)
+                    if op == "stop":
+                        show.idle_armed = False
                 if op in ("start", "resume"):
-                    show.audio_note = ""
+                    playback.audio_note = ""
                 if op in ("stop", "pause"):
                     self.jobs = deque(j for j in self.jobs if j.get("priority") != -2)
             elif op not in (None, "load", "status"):
                 raise InteractionError("Thao tác kịch bản không hợp lệ.")
-            out = dict(show.state(), preparing=show.preparing, audioNote=show.audio_note)
-            summary_episode = show.episode if show.mode in ("running", "paused") else episode
-            if summary_episode is not None and summary_episode >= len(show.plan["episodes"]):
-                summary_episode = None
-            out["checks"] = self.live_checks(summary_episode)
+            live = playback.state()
+            out = dict(live, id=show.script_id, revision=show.revision, drafting=show.drafting, note=show.draft_note,
+                       editorCursor=show.read_cursor() if show.script_id else 0, preparing=show.preparing,
+                       audioNote=playback.audio_note or show.audio_note, playbackTitle=playback.plan["topic"],
+                       playbackTotal=len(playback.plan["lines"]), playbackFlow=playback.plan["flow"],
+                       playbackId=playback.script_id)
+            active = playback.mode in ("running", "paused")
+            out["checks"] = self.live_checks(playback if active else show, playback.episode if active else episode)
             if op != "status":
                 out.update(plan=show.plan, catalog=show.catalog(), versions=show.versions())
             return out
 
-    def live_checks(self, episode):
-        show = self.show
+    def live_checks(self, show, episode):
         voice = {"vieneu": "VieNeu CUDA", "espeak": "eSpeak NG", "auto": "Tự động", "edge": "Edge TTS"}
         checks = {
             "renderer": self.renderer[-6:] if self.renderer else "",
@@ -884,29 +907,29 @@ class Channel:
 
     def maybe_idle(self):
         settings = self.live.settings
-        slot = self.show.slot()
-        if self.show.mode in ("running", "paused"):
+        slot = self.playback.slot()
+        if self.playback.mode in ("running", "paused"):
             self.idle_since = None
-            if time.monotonic() < self.show.wait_until:
+            if time.monotonic() < self.playback.wait_until:
                 return
-            if (slot is None or slot == self.show.last or not self.ready or not self.speaker.available
+            if (slot is None or slot == self.playback.last or not self.ready or not self.speaker.available
                     or self.paused or self.active or self.live.poll):
                 return
-            story = self.show.plan["flow"] == "story"
+            story = self.playback.plan["flow"] == "story"
             if story:
-                queued = any(job.get("show_slot") == slot and job.get("show_token") == self.show.token for job in self.jobs)
+                queued = any(job.get("show_slot") == slot and job.get("show_token") == self.playback.token for job in self.jobs)
                 if (queued or self.worker_kind == "script" or any(item[0] == "script" for item in self.incoming)
-                        or (self.jobs and not self.show.story_has_turn(slot))):
+                        or (self.jobs and not self.playback.story_has_turn(slot))):
                     return
             elif self.jobs or self.incoming or self.worker_busy:
                 return
-            line = self.show.plan["lines"][slot]
+            line = self.playback.plan["lines"][slot]
             if line and not approved_text(line):
-                self.show.fail_playback(f"Đoạn {slot + 1} có nội dung không thể phát. Hãy chỉnh đoạn này.")
+                self.playback.fail_playback(f"Đoạn {slot + 1} có nội dung không thể phát. Hãy chỉnh đoạn này.")
             elif line:
-                self.enqueue("script", line, "TALK", viewer_note=(self.show.token, slot), story_turn=story)
+                self.enqueue("script", line, "TALK", viewer_note=(self.playback.token, slot), story_turn=story)
             else:
-                self.show.finished(slot)
+                self.playback.finished(slot)
             return
         if (not settings["idle_on"] or not self.speaker.available or not self.ready or self.paused
                 or self.active or self.jobs or self.incoming or self.worker_busy or self.live.poll):
@@ -918,10 +941,13 @@ class Channel:
             return
         if now - self.idle_since < settings["idle_seconds"]:
             return
-        if (self.show.mode == "stopped" and self.show.idle_armed
-                and self.show.plan["flow"] == "story" and self.show.plan["idle_start"]
-                and self.show.cursor < len(self.show.plan["lines"]) and any(self.show.plan["lines"])):
-            self.show.control("start")
+        show = self.show
+        if (show.idle_armed and show.plan["flow"] == "story" and show.plan["idle_start"]
+                and show.read_cursor() < len(show.plan["lines"]) and any(show.plan["lines"])):
+            playback = show.playback_copy(self.playback.token)
+            playback.control("start")
+            self.playback = playback
+            show.idle_armed = False
             self.idle_since = None
             return
         lines = settings["idle_script"].splitlines() or IDLE_LINES
@@ -1119,9 +1145,10 @@ class Channel:
                                "reply_length": settings["reply_length"],
                                "viewer_note": viewer_note if settings["memory_on"] and settings["memory_context"] else ""}
                     with self.cv:
-                        source_plan, script_id = self.show.plan, self.show.script_id
+                        source_show = self.playback if self.playback.mode in ("running", "paused") else self.show
+                        source_plan, script_id = source_show.plan, source_show.script_id
                     if source_plan["ground"] and not faq and self.key:
-                        source = self.show.source_lines(script_id, source_plan["lines"])
+                        source = self.playback.source_lines(script_id, source_plan["lines"])
                         profile["excerpts"] = excerpts(text, source)
                         profile["ground"] = True
                     story = bool(STORY_REQUEST.search(normalized(text)))
@@ -1154,11 +1181,11 @@ class Channel:
                             continue
                 with self.cv:
                     if self.paused or generation != self.generation or (
-                        kind == "script" and viewer_note != (self.show.token, self.show.slot())
+                        kind == "script" and viewer_note != (self.playback.token, self.playback.slot())
                     ):
                         continue
                 speaker = self.speaker
-                speech = self.show.cached(viewer_note[1], text, speaker) if kind == "script" and isinstance(speaker, Speaker) else None
+                speech = self.playback.cached(viewer_note[1], text, speaker) if kind == "script" and isinstance(speaker, Speaker) else None
                 if not clip and speech is None:
                     synthesizing = True
                     if kind in ("chat", "approved") and isinstance(speaker, Speaker):
@@ -1169,12 +1196,12 @@ class Channel:
                 audio = base64.b64encode(clip or speech.audio).decode("ascii")
                 with self.cv:
                     if not self.paused and generation == self.generation:
-                        story_turn = kind == "script" and self.show.plan["flow"] == "story"
+                        story_turn = kind == "script" and self.playback.plan["flow"] == "story"
                         if kind == "script":
-                            if (viewer_note != (self.show.token, self.show.slot()) or self.live.poll
+                            if (viewer_note != (self.playback.token, self.playback.slot()) or self.live.poll
                                     or (not story_turn and (self.jobs or self.incoming))):
                                 continue
-                        if kind == "idle" and (self.show.mode in ("running", "paused") or self.jobs or self.incoming or self.live.poll):
+                        if kind == "idle" and (self.playback.mode in ("running", "paused") or self.jobs or self.incoming or self.live.poll):
                             continue
                         job = self.queue_play(gesture, text, audio=audio,
                                               priority={"script": -2, "idle": -1, "chat": 0, "reaction": 1}.get(kind, 2),
@@ -1192,9 +1219,9 @@ class Channel:
             except Exception as error:
                 with self.cv:
                     if generation == self.generation and not self.paused:
-                        if kind == "script" and viewer_note[0] == self.show.token and self.show.mode == "running":
-                            self.show.control("pause")
-                            self.show.audio_note = "Đã tạm dừng tại đoạn chưa phát được. " + str(error)
+                        if kind == "script" and viewer_note[0] == self.playback.token and self.playback.mode == "running":
+                            self.playback.control("pause")
+                            self.playback.audio_note = "Đã tạm dừng tại đoạn chưa phát được. " + str(error)
                         if synthesizing and kind in ("chat", "approved"):
                             self.keep_draft(comment if kind == "chat" else viewer_note, text, gesture)
                             self.note = f"{error} Câu đã vào mục Duyệt để thử lại."
@@ -1381,12 +1408,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if (not self.local_host() or self.headers.get("Origin") not in (None, self.server.origin)
-                or self.headers.get("X-Bong-Hoa") != "1" or self.headers.get_content_type() != "application/json"):
+                or self.headers.get("X-Bong-Hoa") != "1"):
             self.reply(403, {"error": "Chỉ nhận lệnh từ bảng điều khiển trên máy này."})
             return
         try:
             endpoint = urlsplit(self.path).path
             size = int(self.headers.get("Content-Length", "0"))
+            media = self.headers.get_content_type()
+            channel = self.server.channel
+            if endpoint == "/api/document-upload" and media == "application/octet-stream":
+                self.connection.settimeout(60)
+                name = unquote(self.headers.get("X-Bong-Filename", ""), errors="strict")
+                self.close_connection = True
+                self.reply(202, {"id": channel.documents.upload(self.rfile, name, size)})
+                return
+            if media != "application/json":
+                raise ValueError("media")
             limits = {"/api/assistant": MAX_DOCUMENT + 3_000_000, "/api/preferences": AUDIO_LIMIT, "/api/interactions": MUSIC_LIMIT, "/api/operator": AUDIO_LIMIT}
             limit = (limits.get(endpoint, 0) + 2) // 3 * 4 + 4096
             if not 2 <= size <= limit:
@@ -1394,7 +1431,6 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(size))
             if not isinstance(body, dict):
                 raise ValueError("object")
-            channel = self.server.channel
             if endpoint == "/api/status":
                 out = channel.status()
             elif endpoint == "/api/render":
@@ -1409,6 +1445,14 @@ class Handler(BaseHTTPRequestHandler):
                 out = channel.assistant(body)
             elif endpoint == "/api/operator":
                 out = channel.operator_settings(body)
+            elif endpoint == "/api/documents":
+                if body.get("operation") == "search":
+                    document, query = body.get("id"), body.get("query")
+                    if not isinstance(document, str) or not isinstance(query, str):
+                        raise InteractionError("Chọn tài liệu và nhập cụm từ cần tìm.")
+                    out = {"matches": channel.documents.search(document, query)}
+                else:
+                    out = {"documents": channel.documents.list()}
             else:
                 self.reply(404, {"error": "Lệnh không tồn tại."})
                 return
@@ -1417,8 +1461,8 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(400, {"error": str(error)})
         except (ValueError, TypeError, UnicodeError, TimeoutError):
             self.reply(400, {"error": "Dữ liệu điều khiển chưa đúng định dạng."})
-        except OSError:
-            self.reply(500, {"error": "Không lưu được cài đặt. Kiểm tra quyền ghi thư mục đã giải nén."})
+        except (OSError, sqlite3.Error):
+            self.reply(500, {"error": "Không đọc hoặc lưu được dữ liệu. Kiểm tra dung lượng và quyền ghi."})
 
 
 def main():

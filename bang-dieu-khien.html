@@ -10,6 +10,7 @@
   <script src="dieu-khien.js" defer></script>
   <script src="cai-dat.js" defer></script>
   <script src="tuong-tac.js" defer></script>
+  <script src="kho-tai-lieu.js" defer></script>
   <script src="tro-ly.js" defer></script>
   <script src="thiet-lap.js" defer></script>
 </head>
@@ -72,60 +73,110 @@
 </div>
 </section>
 <section class="stack control-pane" id="pane-assistant" role="tabpanel" aria-labelledby="tab-assistant" hidden>
-<div class="dashboard-grid">
-<section class="panel stack">
-<h2>Thư viện kịch bản</h2>
-<div class="row"><button id="show-new">Kịch bản mới</button><button id="show-duplicate">Lưu bản sao</button></div>
-<label>Kịch bản đã lưu<select id="show-library"></select></label>
-<label>Phiên bản trước<select id="show-version"></select></label>
-<button id="show-restore">Khôi phục phiên bản</button>
-<details>
-<summary>Nhập tài liệu hoặc danh sách từ Sheet</summary>
-<div class="stack">
-<label>File truyện (.md, .txt, .docx)<input id="show-document" type="file" accept=".md,.txt,.docx"></label>
-<button id="show-import">Nhập thành kịch bản mới</button>
-<label>Danh sách CSV có cột title<input id="show-csv" type="file" accept=".csv"></label>
-<button id="show-sheet">Sắp thư viện theo CSV</button>
-</div>
-</details>
-<label>Chế độ phát<select id="show-flow"><option value="timed">Theo lịch 30 phút</option><option value="story">Kể nối tiếp</option></select></label>
-<label class="check"><input type="checkbox" id="show-idle_start"> Tự bắt đầu truyện nếu đã bật tự nói khi phòng yên lặng</label>
-<label class="check"><input type="checkbox" id="show-ground"> Dùng kịch bản này làm tư liệu trả lời chat</label>
-<label>Chủ đề buổi LIVE<input id="show-topic" maxlength="200" placeholder="Ví dụ: Bông sắp xếp lại góc học tập"></label>
-<label>Sản phẩm muốn giới thiệu<textarea id="show-product" maxlength="1800" rows="3" placeholder="Tên, đặc điểm, giá, ưu đãi đã xác nhận. Có thể bỏ trống."></textarea></label>
-<label>Tư liệu cho Bông<textarea id="show-notes" maxlength="3000" rows="4" placeholder="Dán dữ kiện đã kiểm tra và những điều muốn Bông nhắc tới."></textarea></label>
-<button id="show-generate">Soạn 30 đoạn bằng 9Router</button>
-<p id="show-note" class="subtle" role="status"></p>
+  <section class="panel stack assistant-player" aria-labelledby="show-player-heading">
+    <div class="assistant-player-header">
+      <div><h2 id="show-player-heading">Phát trên kênh</h2><p id="show-clock" class="subtle"></p></div>
+      <div class="row">
+        <button id="show-pause">Tạm dừng</button>
+        <button id="show-resume">Tiếp tục</button>
+        <button class="stop" id="show-stop">Kết thúc</button>
+      </div>
+    </div>
+    <details>
+      <summary>Kiểm tra nguồn phát và giọng</summary>
+      <dl class="status-list details-body">
+        <div><dt>Nguồn giữ quyền phát</dt><dd id="show-check-source">Đang kiểm tra…</dd></div>
+        <div><dt>Giọng đọc</dt><dd id="show-check-voice">—</dd></div>
+        <div><dt>Âm thanh chuẩn bị</dt><dd id="show-check-audio">—</dd></div>
+        <div><dt>Hoạt động</dt><dd id="show-check-now">—</dd></div>
+      </dl>
+    </details>
+  </section>
+  <div class="dashboard-grid assistant-grid">
+    <div class="stack">
+      <section class="panel stack" aria-labelledby="show-library-heading">
+        <h2 id="show-library-heading">Kịch bản đã lưu</h2>
+        <label>Chọn kịch bản<select id="show-library"></select></label>
+        <div class="row"><button class="primary" id="show-start">Phát bản đã lưu</button><button id="show-new">Kịch bản mới</button></div>
+        <details>
+          <summary>Bản sao và lịch sử</summary>
+          <div class="stack details-body">
+            <button id="show-duplicate">Lưu bản sao</button>
+            <label>Phiên bản trước<select id="show-version"></select></label>
+            <button id="show-restore">Khôi phục phiên bản</button>
+            <label>Danh sách sắp xếp (.csv)<input id="show-csv" type="file" accept=".csv"></label>
+            <button id="show-sheet">Sắp thư viện theo CSV</button>
+          </div>
+        </details>
+      </section>
+      <details class="panel" id="doc-panel">
+        <summary>Kho tài liệu</summary>
+        <div class="stack details-body">
+          <label>Tài liệu trên máy<input id="doc-file" type="file" accept=".pdf,.doc,.docx,.md,.markdown,.txt,.csv,.tsv,.html,.htm,.json,.jsonl"></label>
+          <small>Tối đa 1 GiB mỗi tệp. PDF ảnh quét cần OCR trước.</small>
+          <button id="doc-upload">Đưa vào kho</button>
+          <progress id="doc-progress" max="100" hidden></progress>
+          <label>Tài liệu đã nhập<select id="doc-library"></select></label>
+          <form id="doc-search" class="stack">
+            <label>Tìm trong tài liệu<input id="doc-query" maxlength="240" placeholder="Tên nhân vật hoặc cụm từ, bỏ trống để xem đầu tài liệu"></label>
+            <button id="doc-find">Tìm đoạn</button>
+          </form>
+          <p id="doc-note" role="status"></p>
+          <div class="stack" id="doc-results"></div>
+          <details>
+            <summary>Nhập nhanh thành kịch bản</summary>
+            <div class="stack details-body">
+              <label>File .md, .txt hoặc .docx đến 12 MB<input id="show-document" type="file" accept=".md,.txt,.doc,.docx"></label>
+              <button id="show-import">Nhập thành kịch bản mới</button>
+            </div>
+          </details>
+        </div>
+      </details>
+    </div>
+    <section class="panel stack" aria-labelledby="show-editor-heading">
+      <h2 id="show-editor-heading">Soạn kịch bản</h2>
+      <label>Tên kịch bản<input id="show-topic" maxlength="200" placeholder="Ví dụ: Chuyện ở bến xe"></label>
+      <label>Chế độ phát<select id="show-flow"><option value="timed">Theo lịch 30 phút</option><option value="story">Kể nối tiếp</option></select></label>
+      <button id="show-generate">Soạn 30 đoạn bằng 9Router</button>
+      <p id="show-source" class="subtle"></p>
+      <label id="show-chapter-label" hidden>Đến chương<select id="show-chapter"></select></label>
+      <label>Đoạn đang chỉnh<select id="show-minute"></select></label>
+      <label>Lời Bông đọc<textarea id="show-line" maxlength="480" rows="5" placeholder="Nhập lời Bông đọc"></textarea></label>
+      <div class="row">
+        <button class="primary" id="show-save">Lưu kịch bản</button>
+        <button id="show-retell">AI kể lại phần đã chọn</button>
+        <button id="show-add">Thêm đoạn</button>
+      </div>
+      <p id="show-message" role="status"></p>
+      <p id="show-note" class="subtle" role="status"></p>
+      <details>
+        <summary>Đoạn, tập và chuẩn bị âm thanh</summary>
+        <div class="stack details-body">
+          <div class="row"><button id="show-prev">Đoạn trước</button><button id="show-next">Đoạn sau</button><button id="show-from">Phát từ đoạn chọn trong bản lưu</button></div>
+          <label id="show-join-label" class="check" hidden><input id="show-join" type="checkbox"> Kể liền với đoạn trước, chưa chen chat</label>
+          <div class="row"><button id="show-prepare">Tạo tiếng trước</button><button id="show-prepare-chapter">Tạo tiếng phần đã chọn</button></div>
+          <small id="show-section-help">AI kể lại từ đoạn đang chọn, tối đa 30 đoạn hoặc đến hết chương.</small>
+          <div id="show-story-controls" class="stack" hidden>
+            <label>Số lượt chen tối đa giữa hai đoạn<input id="show-chat_limit" type="number" min="0" max="5" step="1" value="1"></label>
+            <label>Thời lượng mục tiêu mỗi tập (phút)<input id="show-episode-minutes" type="number" min="2" max="180" step="1" value="30"></label>
+            <button id="show-episodes">Chia tập theo thời lượng</button>
+            <label>Phạm vi phát<select id="show-episode"></select></label>
+            <div class="row"><button id="show-prepare-episode">Chuẩn bị tập này</button><button id="show-start-episode">Phát tập trong bản lưu</button></div>
+          </div>
+        </div>
+      </details>
+      <details>
+        <summary>Tư liệu và quy tắc tự phát</summary>
+        <div class="stack details-body">
+          <label>Sản phẩm muốn giới thiệu<textarea id="show-product" maxlength="1800" rows="3" placeholder="Tên, đặc điểm và ưu đãi đã xác nhận"></textarea></label>
+          <label>Tư liệu cho Bông<textarea id="show-notes" maxlength="3000" rows="4" placeholder="Dữ kiện đã kiểm tra"></textarea></label>
+          <label class="check"><input type="checkbox" id="show-idle_start"> Tự bắt đầu khi đã bật lời lấp khoảng lặng</label>
+          <label class="check"><input type="checkbox" id="show-ground"> Dùng kịch bản này làm tư liệu trả lời chat</label>
+        </div>
+      </details>
+    </section>
+  </div>
 </section>
-<section class="panel stack">
-<h2>Kiểm tra phát LIVE</h2>
-<dl class="status-list">
-  <div><dt>Nguồn giữ quyền phát</dt><dd id="show-check-source">Đang kiểm tra…</dd></div>
-  <div><dt>Giọng đọc</dt><dd id="show-check-voice">—</dd></div>
-  <div><dt>Âm thanh của tập</dt><dd id="show-check-audio">—</dd></div>
-  <div><dt>Bông đang làm gì</dt><dd id="show-check-now">—</dd></div>
-</dl>
-<h2>Lời thoại</h2>
-<p id="show-source" class="subtle"></p>
-<div id="show-story-controls" class="stack" hidden>
-<label>Số lượt chen tối đa giữa hai đoạn<input id="show-chat_limit" type="number" min="0" max="5" step="1" value="1"></label>
-<label>Thời lượng mục tiêu mỗi tập (phút)<input id="show-episode-minutes" type="number" min="2" max="180" step="1" value="30"></label>
-<button id="show-episodes">Chia tập theo thời lượng</button>
-<label>Phạm vi phát<select id="show-episode"></select></label>
-<div class="row"><button id="show-prepare-episode">Chuẩn bị tập này</button><button id="show-start-episode">Phát tập này</button></div>
-</div>
-<label id="show-chapter-label" hidden>Đến chương<select id="show-chapter"></select></label>
-<label>Chọn đoạn để sửa<select id="show-minute"></select></label>
-<label>Lời Bông đọc<textarea id="show-line" maxlength="480" rows="5" placeholder="Nhập lời Bông đọc."></textarea></label>
-<label id="show-join-label" class="check" hidden><input id="show-join" type="checkbox"> Kể liền với đoạn trước, chưa chen chat</label>
-<div class="row"><button id="show-prev">Đoạn trước</button><button id="show-next">Đoạn sau</button><button id="show-add">Thêm đoạn</button><button id="show-save">Lưu kịch bản</button><button id="show-prepare">Tạo tiếng trước</button></div>
-<div class="row"><button id="show-retell">AI kể lại phần đã chọn</button><button id="show-prepare-chapter">Tạo tiếng phần đã chọn</button></div>
-<small id="show-section-help">Bắt đầu từ đoạn đang chọn đến hết chương. AI kể lại tối đa 30 đoạn mỗi lượt.</small>
-<h2>Phát trên kênh này</h2><p id="show-clock"></p>
-<div class="row"><button class="primary" id="show-start">Bắt đầu</button><button id="show-from">Phát từ đoạn chọn</button><button id="show-pause">Tạm dừng</button><button id="show-resume">Tiếp tục</button><button class="stop" id="show-stop">Kết thúc</button></div>
-<small id="show-play-help"></small>
-<p id="show-message" role="status"></p>
-</section></div></section>
 <section class="stack control-pane" id="pane-setup" role="tabpanel" aria-labelledby="tab-setup" hidden>
 <div class="dashboard-grid">
 <div class="stack">
@@ -176,7 +227,7 @@
 <div class="dashboard-grid">
 <div class="stack">
 <section class="panel stack">
-              <h3>Trò chuyện và kể chuyện</h3>
+              <h3>Trả lời chat và lấp khoảng lặng</h3>
               <label>Độ dài câu trả lời AI
                 <select form="interaction-settings" id="live-reply_length">
                   <option value="short">Ngắn · tối đa 180 ký tự</option>
@@ -188,7 +239,7 @@
               <label>Chờ bao lâu trước khi Bông tự nói (giây)
                 <input form="interaction-settings" id="live-idle_seconds" type="number" min="15" max="600" required>
               </label>
-              <label>Chuyện hoặc lời dẫn để Bông tự nói
+              <label>Lời ngắn khi phòng yên lặng
                 <textarea form="interaction-settings" id="live-idle_script" maxlength="2000" placeholder="Để trống để dùng chuyện và lời dẫn có sẵn"></textarea>
               </label>
               <small>Mỗi dòng là một lượt nói, tối đa 480 ký tự. Bông đọc lần lượt khi không có câu chờ phát hoặc chờ duyệt.</small>

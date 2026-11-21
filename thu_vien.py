@@ -33,15 +33,22 @@ def read_document(name, encoded):
         data = base64.b64decode(encoded, validate=True)
         if not 0 < len(data) <= MAX_DOCUMENT:
             raise ValueError()
+        if data.startswith(bytes.fromhex("d0cf11e0a1b11ae1")):
+            raise InteractionError("Đây là Word .doc đời cũ hoặc Word có mật khẩu. Mở bằng Word rồi lưu thành .docx không khóa.")
         ext = Path(name.lower()).suffix
-        if ext == ".docx":
-            with ZipFile(BytesIO(data)) as archive:
-                entry = archive.getinfo("word/document.xml")
-                if entry.file_size > 24_000_000:
-                    raise ValueError()
-                xml = archive.read(entry)
+        if ext in (".doc", ".docx"):
+            try:
+                with ZipFile(BytesIO(data)) as archive:
+                    entry = archive.getinfo("word/document.xml")
+                    if entry.file_size > 24_000_000:
+                        raise InteractionError("Phần XML của Word vượt 24 MiB.")
+                    xml = archive.read(entry)
+            except BadZipFile:
+                raise InteractionError("Tệp DOCX hỏng hoặc không đúng định dạng nén chuẩn.")
+            except KeyError:
+                raise InteractionError("Tệp Word thiếu nội dung văn bản chuẩn (thiếu word/document.xml).")
             if re.search(rb"<!\s*(DOCTYPE|ENTITY)", xml, re.I) or b"\x00" in xml:
-                raise ValueError()
+                raise InteractionError("Tệp Word chứa cấu trúc không an toàn.")
             root = ElementTree.fromstring(xml)
             paragraphs = []
             for p in root.iter(WORD + "p"):
