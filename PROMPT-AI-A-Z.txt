@@ -1,0 +1,132 @@
+Bạn là kỹ thuật viên hỗ trợ tôi trên máy Windows. Tôi là người mới.
+Hãy dùng terminal và giao diện máy này nếu bạn có quyền. Mục tiêu là
+chạy gói Bông Hoa Live, làm nhân vật nói tiếng Việt và cử động trong
+OBS, ghi thử có tiếng, rồi chuẩn bị kết nối bình luận TikTok theo
+quyền thực tế của tài khoản. Trả lời tôi bằng tiếng Việt.
+
+1. Xác định bạn đang thao tác trên đúng PC của tôi. Nếu chỉ có chat
+   hoặc một máy từ xa khác, nói rõ bạn chưa thao tác được Windows của
+   tôi. Hướng dẫn tôi mở đúng cửa sổ terminal và chỉ đưa một bước
+   ngắn mỗi lần. Đừng báo đã cài hoặc đã kiểm thử khi chưa làm.
+
+2. Tìm tệp ZIP Bong-Hoa-Live trong Downloads hoặc dùng đường dẫn tôi
+   đưa. Nếu chưa giải nén, giải nén vào một thư mục mới trong Documents,
+   xử lý cả đường dẫn chứa khoảng trắng. Giữ lại file ZIP và các thư
+   mục cũ. Đọc BAT-DAU.txt, app.py, cai-windows.ps1 và hai hồ sơ mẫu.
+   Mở THU-NHAN-VAT.html, chọn Xòe cánh và Bay tại chỗ để kiểm tra hai
+   cánh gián sau lưng. Bấm Trò chuyện, xác nhận nghe “Chúc mừng!”
+   và miệng mở theo tiếng nói, khép lại khi câu kết thúc. Bấm Cười
+   lớn, Ngạc nhiên, Buồn và Ngáp ngủ để kiểm tra các bản thu có sẵn.
+   Phát hiệu ứng nghe lại âm hiện tại. Thử giọng đọc theo văn bản
+   mới ở bước TTS riêng.
+
+3. Kiểm tra bản Windows, WinGet, Python >=3.10, OBS Studio và môi
+   trường .venv. Trong thư mục gói, chạy lệnh PowerShell sau nếu
+   cần chuẩn bị các thành phần mặc định:
+     powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cai-windows.ps1
+   Tùy chọn Bypass ở đây chỉ áp dụng cho tiến trình chạy tệp cài.
+   Dùng nguồn WinGet chính thức và thư viện được ghi trong gói. Nếu
+   Windows hỏi UAC, để tôi xem và tự xác nhận. Nếu WinGet thiếu hoặc
+   không cài được, mở trang chính thức để tôi chọn bản Windows hoặc
+   cài tiếp bằng trình cài đã xác minh. Không tắt Windows Security
+   hay đổi chính sách PowerShell toàn máy. Đừng cài VB-Cable,
+   Veadotube, FFmpeg hoặc phần mềm khác ngoài phạm vi này.
+
+4. Chạy 05-KIEM-TRA-TIENG.bat trước khi mở OBS. Nghe câu tiếng Việt
+   tạo trong kiem-tra-am-thanh. Nếu không có file vì Edge TTS lỗi,
+   chạy lệnh sau để cài giọng ngoại tuyến từ WinGet:
+     .\02-CAI-CONG-CU.bat -BoQuaOBS -ThemGiongNgoaiTuyen
+   Nếu bước pip Edge TTS đang hỏng, thêm -BoQuaGiongOnline. Thử lại
+   05. Nếu máy đã có espeak-ng.exe ở thư mục khác, đặt đường dẫn
+   vào ESPEAK_NG_EXE. Có thể chọn voice_engine "espeak" trong hồ sơ
+   để kiểm tra giọng này riêng. Nếu có file nhưng không nghe, kiểm
+   tra trình phát, Volume Mixer và loa/tai nghe. Không yêu cầu tôi
+   tự cung cấp tệp âm thanh, các giọng này tự tạo từ chữ.
+
+   Chạy 03-CHAY-KENH-1.bat hoặc dùng lệnh:
+     .\.venv\Scripts\python.exe .\app.py --profile .\profiles\kenh-1.json --open
+   Phải giữ tiến trình chạy trong lúc thử. Mở bảng điều khiển cổng 8765
+   và tab phát thử. Dùng lần lượt Thử lời thoại mẫu, Diễn im lặng, Đọc lời
+   thoại với câu “Chào các bạn, mình là Bông Đào!”, và Gửi bình luận
+   mẫu “Chào Bông!”. Dùng Diễn thử với Thả tim, Xòe cánh và Cười lớn.
+   Động tác không có file tiếng vẫn hiện trong nguồn phát. Kiểm tra
+   mặt, tay chân, cánh, giọng, hiệu ứng và hàng duyệt.
+   Kiểm tra nút Dừng và xóa hàng đợi, rồi bấm Chạy tiếp. Đóng tab
+   phát thử trước lúc sử dụng OBS.
+
+5. Thiết lập OBS với một scene thử mới. Giữ nguyên dữ liệu scene cũ
+   nếu tôi đã có dự án đang dùng, dùng hồ sơ riêng nếu cần đổi kích
+   thước video/âm thanh. Dùng 720 × 1280, 30 fps để diễn tập. Thêm
+   Browser Source với URL trong bảng điều khiển, 720 × 1280,
+   Control audio via OBS. Nếu cần thì mở Interact và bật tiếng.
+   Đặt Monitor Off và track ghi/phát đúng (thông thường Track 1).
+   Vô hiệu hóa Desktop Audio và Mic/Aux toàn cục cho hồ sơ thử,
+   và kiểm tra các nguồn bắt âm theo ứng dụng hoặc âm toàn máy
+   trong scene đó. Nếu tôi chọn một file nhạc có quyền dùng, thêm
+   bằng Media Source và đặt âm lượng thấp hơn giọng Bông.
+
+6. Chỉ ghi thử cục bộ, chưa bắt đầu phát công khai. Ghi ít nhất 10–15
+   giây với giọng Bông, nhạc nền nếu có và một clip YouTube tôi đang
+   nghe. Kiểm tra thanh mixer và nghe lại file. Nếu chưa đạt, tự
+   dò đúng cổng, source, track hay routing trước khi báo kết quả.
+   Báo file ghi ở đâu và điều gì thực tế nghe được. Nếu bạn không
+   đo được hoặc không có GUI, cho tôi biết bước cần tự kiểm tra.
+
+7. Cả hai hồ sơ đã đặt 9Router qua Tailscale và combo live-tiktok.
+   Đọc 9ROUTER-LIVE-STUDIO.txt và chạy 06-TEST-9ROUTER.bat trên PC
+   đã kết nối Tailscale. Để tôi nhập key trong cửa sổ ẩn nếu được
+   hỏi. Xác nhận hành động và lời thoại, rồi lưu key trong .env.
+   Nếu tôi chọn Gemini trực tiếp, đặt llm_provider thành gemini
+   cho hồ sơ đó và tạo .env từ
+   env.example.txt nếu chưa có. Mở trang https://aistudio.google.com/api-keys
+   và để tôi đăng nhập, tạo key và dán trực tiếp vào Notepad trên máy.
+   Bạn có thể kiểm tra key đã được đặt bằng app.py --check nhưng
+   không được in, dán vào chat, đưa lên Git hay hiện key trong ảnh.
+   Tải lại kênh, gửi câu hỏi mẫu, kiểm tra được văn bản mới và phát
+   đúng hành động. Nếu Gemini lỗi, xem mã lỗi. Khi cần, dùng
+   app.py --models và tài liệu hiện hành để chọn model được phép
+   dùng. Nếu cần trả phí, để tôi quyết định. Giữ chế độ duyệt.
+
+8. Thiết lập TikTok nếu tôi có phòng LIVE hợp lệ và muốn dùng bộ đọc
+   chat bên thứ ba. Hỏi đúng @username và kiểm tra phương thức phát
+   mà TikTok cấp cho kênh. Chạy cai-windows.ps1 với -BoQuaOBS và
+   -ThemDocTikTok để cài phần đọc chat. Sửa tiktok_username và
+   tiktok_enabled trong hồ sơ kênh, không yêu cầu cookie hay mật
+   khẩu. Nếu TikTok cấp stream key, để tôi nhập riêng trực tiếp
+   trong OBS. Nếu chỉ có LIVE Studio, kiểm tra nguồn mà nó hỗ trợ.
+   Không tìm cách vượt giới hạn hoặc tự bấm Start Streaming. Nếu
+   chưa có quyền LIVE, hoàn thành với ghi cục bộ, Gemini và bình
+   luận mẫu, rồi nói rõ điều kiện còn thiếu. Nếu đã có phiên LIVE
+   do tôi mở, xác nhận một bình luận thật đến hàng duyệt và phát
+   được câu trả lời sau khi tôi duyệt. Để tôi quyết định về tự phát.
+
+9. Sau khi kênh đầu đạt, mở kênh 2 qua 04-CHAY-HAI-KENH.bat.
+   Kiểm tra 8765 và 8766 với hai nguồn OBS riêng. Lúc gửi câu cho
+   kênh 1, kênh 2 không phát câu đó, rồi thử chiều ngược lại. Nếu
+   cần hai tiến trình OBS, tạo hai thư mục OBS portable riêng như
+   trong BAT-DAU.txt. Theo dõi tài nguyên trước khi tăng số kênh.
+   Không ghi đè scene, profile, nhạc hoặc thiết lập của tôi.
+
+10. Kết thúc bằng bảng ngắn ghi các mục Đã xác nhận / Cần tôi thao tác
+    / Chưa xác minh, kèm đường dẫn thư mục, hai URL, file ghi thử và
+    các nút cần dùng khi chạy lần sau. Báo đúng việc bạn đã quan sát.
+
+11. Tùy chọn nếu tôi muốn thay bản thu có sẵn. Tìm clip cười,
+    khóc và ngáp ngắn có giấy phép CC0 hoặc giấy phép ghi rõ được
+    phép dùng cho livestream đúng mục đích của tôi. Đọc trang
+    giấy phép của từng clip trước khi tải. Tránh trích âm từ video
+    YouTube, TikTok, phim hay giọng người nổi tiếng. Chép vào effects
+    với tên LAUGH.wav, SAD.wav, TIRED.wav (hoặc MP3 tương ứng).
+    hoặc tải trực tiếp lên trong mục Âm thanh hành động của đúng kênh.
+    Giữ dưới 4 giây và 1,5 MB, ưu tiên clip mono không có nhạc nền.
+    Ghi tên tác giả, link gốc và giấy phép trong TAP-TIN-NGUON.txt.
+    Kiểm tra mỗi clip bằng Nghe thử qua nguồn phát và nghe bản ghi.
+    Nguồn bản thu đi kèm ở effects/NGUON-AM-THANH.txt.
+
+12. Nếu cần giảm tải, mở Hiệu năng nhân vật và thử chế độ Nhẹ.
+    Dùng OBS View → Stats và Task Manager để so sánh trước/sau
+    trong cùng điều kiện. Giữ 720 × 1280 ở 30 fps lúc diễn tập rồi
+    xem khả năng mã hóa phần cứng. Lưu kết quả tách riêng lag dựng
+    cảnh, lag mã hóa và RAM. Không bắt buộc đăng mã lên GitHub Pages.
+
+Nếu trên PC đã có Bông Hoa chạy OBS, dùng CAP-NHAT-TU-BAN-CU.txt để nâng cấp và thử LIVE Studio.

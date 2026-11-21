@@ -1,0 +1,32 @@
+NGUỒN BẢN THU ĐI KÈM
+
+Tất cả nguồn dưới đây dùng giấy phép CC0 1.0.
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Ứng dụng chứa các đoạn trích đã cắt gọn, chuyển về mono,
+cân mức âm lượng và thêm fade ngắn đầu/cuối. Các bản thu
+được đóng gói trong hieu-ung-data.js để chạy ngoại tuyến.
+
+Lời thoại mẫu “Chúc mừng!” · Penn Zero MSSJ · Lingua Libre
+https://commons.wikimedia.org/wiki/File:LL-Q9199_(vie)-Penn_Zero_MSSJ-ch%C3%BAc_m%E1%BB%ABng.wav
+
+LAUGH · Voices - female laughter - guffaw.wav · jodybruchon
+https://freesound.org/people/jodybruchon/sounds/475212/
+
+SHOCK · gasp.wav · iokera
+https://freesound.org/people/iokera/sounds/414213/
+
+SAD · Girl Crying.wav · thatkellytrna
+https://freesound.org/people/thatkellytrna/sounds/425776/
+
+TIRED · Yawn 1 · OwlStorm (Ashe Kirk / Owlish Media)
+https://freesound.org/people/OwlStorm/sounds/151240/
+
+SCARED · Breath · mcroce
+https://freesound.org/people/mcroce/sounds/234335/
+
+HAPPY · Woo Hoo · Rocotilos
+https://freesound.org/people/Rocotilos/sounds/341488/
+
+WINGS, FLY · Light Wing Flap · TurboFool
+https://freesound.org/people/TurboFool/sounds/561009/

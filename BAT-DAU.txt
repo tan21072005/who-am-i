@@ -1,0 +1,239 @@
+BÔNG HOA LIVE
+Gián đội mũ hoa · Hướng dẫn chạy trên Windows
+
+1. XEM NHÂN VẬT NGAY
+
+Giải nén toàn bộ ZIP bằng Extract All / Giải nén tất cả. Mở thư mục
+Bong-Hoa-Live, rồi bấm đúp THU-NHAN-VAT.html hoặc 01-MO-THU.bat.
+Nếu Windows hỏi mở bằng gì, chọn Chrome hoặc Edge.
+
+Bấm Trò chuyện để nghe bản thu “Chúc mừng!” và xem miệng cử động.
+Bấm Cười lớn, Ngạc nhiên, Buồn hoặc Ngáp ngủ để nghe bản thu diễn
+xuất đi cùng động tác. Bấm Xòe cánh hoặc Bay tại chỗ để xem đôi
+cánh. Nhân vật có 18 trạng thái và 8 hiệu ứng từ bản thu có sẵn.
+Trang này chạy ngoại tuyến. Phát hiệu ứng nghe lại tiếng động tác
+đang chọn. Giọng đọc theo chữ bạn gõ được thử riêng ở phần 3.
+
+Muốn để AI làm giúp các bước sau? Mở PROMPT-AI-A-Z.txt và dán toàn bộ
+vào một AI chạy được lệnh PowerShell ngay trên máy Windows của bạn.
+Nếu dùng AI chỉ có cửa sổ chat, mở các tệp .bat theo hướng dẫn bên dưới.
+
+2. CÀI CÔNG CỤ
+
+Bấm đúp 02-CAI-CONG-CU.bat. Tệp kiểm tra Python, tạo môi trường .venv
+trong thư mục và cài giọng đọc, rồi kiểm tra hoặc cài OBS Studio bằng
+WinGet. Chạy lại được nếu trước đó đã cài một phần. Tải gói cần Internet.
+Nếu trình cài đặt hiện yêu cầu Windows UAC, đọc tên trình cài rồi xác nhận.
+
+Nếu WinGet lỗi/thiếu, tải Python và OBS từ trang chính thức dưới mục 7.
+Với Python cài thủ công, chọn đưa Python vào PATH nếu trình cài hỏi,
+sau đó mở lại tệp 02. Nếu đã cài OBS ở thư mục riêng hoặc chỉ thử giọng,
+mở PowerShell trong thư mục này và chạy:
+  .\02-CAI-CONG-CU.bat -BoQuaOBS
+
+3. THỬ GIỌNG VÀ GHI MỘT VIDEO TRONG OBS
+
+A0. Chạy 05-KIEM-TRA-TIENG.bat. Ứng dụng tạo một câu tiếng Việt rồi
+    mở bản MP3 hoặc WAV trong trình phát Windows. Tệp nằm trong
+    kiem-tra-am-thanh. Nếu tạo được tệp mà không nghe, kiểm tra loa,
+    tai nghe, âm lượng và trình phát trước khi thay cấu hình OBS.
+    Nếu Edge TTS không tạo được file, mở PowerShell trong thư mục:
+      .\02-CAI-CONG-CU.bat -BoQuaOBS -ThemGiongNgoaiTuyen
+    Chạy lại 05. Tùy chọn này lấy eSpeak NG từ WinGet để đọc tiếng
+    Việt ngoại tuyến bằng giọng tổng hợp. Nếu máy có eSpeak NG ở vị
+    trí riêng, đặt ESPEAK_NG_EXE thành đường dẫn đầy đủ đến .exe rồi
+    mở lại cửa sổ chạy. Có thể đặt voice_engine thành "espeak" trong
+    hồ sơ để luôn dùng ngoại tuyến, "edge" để chỉ dùng Edge TTS, hoặc
+    "auto" để ưu tiên Edge và chuyển sang eSpeak khi Edge lỗi.
+    Nếu pip cài Edge TTS đang lỗi, thêm -BoQuaGiongOnline để cài
+    đúng phần dự phòng. eSpeak NG đọc tiếng Việt khá điện tử.
+    Gemini và TikTok vẫn cần Internet.
+
+A. Chạy 03-CHAY-KENH-1.bat và giữ cửa sổ lệnh mở.
+   Bảng điều khiển của Bông Đào mở ở http://127.0.0.1:8765/
+
+B. Bấm Mở phát thử, rồi Bật âm thanh nếu trình duyệt yêu cầu. Quay về
+   bảng điều khiển, đợi Nguồn phát hiện Đã sẵn sàng, bấm Thử lời thoại mẫu.
+   Chọn Thả tim rồi bấm Diễn thử để kiểm tra động tác chưa có tiếng. Nếu thử giọng ngoài OBS đã
+   thành công, tiếp tục thử cùng lời thoại qua nguồn này. Gõ “Chào các bạn, mình là Bông Đào!” rồi bấm Đọc lời thoại để thử
+   giọng tiếng Việt. Để thử luồng bình luận, gõ “Chào Bông!”
+   rồi bấm Gửi bình luận mẫu. Câu trả lời nằm trong Duyệt câu trả lời,
+   có thể sửa, phát hoặc bỏ qua.
+
+C. Đóng tab phát thử để nhường quyền phát cho OBS. Mở OBS. Nếu hiện
+   Auto-Configuration Wizard, chọn tối ưu cho ghi hình để diễn tập.
+   Settings → Video → đặt Base Canvas và Output thành 720 × 1280,
+   Common FPS 30. Trong Sources bấm + → Browser, dùng URL do bảng
+   điều khiển cung cấp:
+      http://127.0.0.1:8765/overlay.html?setup=1
+   Bỏ chọn Local file. Nhập Width 720 và Height 1280.
+   Bật Control audio via OBS. Giữ nguồn hiển thị khi phát thử.
+   Nếu bảng điều khiển báo Cần bấm Bật âm thanh, nhấp phải nguồn OBS
+   → Interact → bấm Bật âm thanh trong cửa sổ tương tác.
+   Nguồn mặc định trong suốt. Nối &bg=1 để thử nền màu, hoặc
+   &captions=1 để hiện câu đang đọc. Có thể thêm ảnh nền của bạn
+   bằng nguồn Image và xếp bên dưới Browser Source.
+
+D. Settings → Audio → Global Audio Devices → tắt mọi Desktop Audio
+   và Mic/Aux. Nếu muốn nói trực tiếp, thêm riêng nguồn Audio Input
+   Capture cho đúng mic. Nghe YouTube bằng tai nghe nếu có mic mở.
+   Kiểm tra scene không chứa nguồn bắt tiếng Chrome hoặc toàn máy.
+   Với Browser Source, mở Advanced Audio Properties → Monitor Off
+   và bật track mà OBS dùng để ghi/phát (thường Track 1).
+   Thêm nhạc từ file có quyền phát bằng Media Source → Local File
+   → Loop nếu muốn lặp. Hạ âm lượng nhạc làm nền, nghe lại để cân chỉnh.
+   Nhép miệng chỉ lấy tín hiệu từ âm thanh Bông tạo.
+
+E. Bấm Start Recording. Trong lúc ghi, mở một video YouTube rồi
+   gửi một câu cho Bông đọc và bật nhạc nền. Dừng ghi, nghe lại video.
+   Kết quả đạt khi nghe rõ Bông và nhạc đã thêm, đồng thời video
+   YouTube không xuất hiện trong bản ghi.
+   Nút Dừng và xóa hàng đợi cắt tiếng, hủy câu cũ và tắt tự phát.
+   Bấm Chạy tiếp để trở về chế độ duyệt. Ctrl+C đóng kênh.
+
+4. BẬT AI VÀ NHẬN BÌNH LUẬN LIVE
+
+Nếu dùng 9Router hoặc muốn thử TikTok LIVE Studio, xem
+9ROUTER-LIVE-STUDIO.txt. 06-TEST-9ROUTER.bat gửi một bình luận
+mẫu và in hành động, lời thoại nhận được. Nếu đã có bản Bông đang
+chạy, xem CAP-NHAT-TU-BAN-CU.txt để giữ hồ sơ và âm thanh.
+
+A. Nếu dùng Gemini trực tiếp, tạo API key ở Google AI Studio. Trong thư mục đã giải nén, mở
+   PowerShell và chạy lệnh sau nếu chưa có .env:
+      if (!(Test-Path .env)) { Copy-Item env.example.txt .env }
+   Mở .env bằng Notepad và dán key sau dấu = ở dòng GEMINI_API_KEY.
+   Khi lưu, kiểm tra tên file đúng là .env và Windows không thêm .txt.
+   Giữ bí mật API key, đừng dán vào đoạn chat hoặc hiện khi ghi màn hình.
+   Khởi động lại kênh. Bảng điều khiển báo “Đã nhập key”. Gửi bình luận
+   mẫu để xác nhận Gemini trả lời bằng câu mới.
+   Nếu model báo lỗi, yêu cầu danh sách model khả dụng với key:
+      .\.venv\Scripts\python.exe .\app.py --models
+   Rồi sửa gemini_model trong hồ sơ tương ứng và khởi động lại.
+   Kiểm tra hạn mức / chi phí của dự án Gemini trước khi bật tự phát.
+
+B. Chỉ bật nhận chat khi tài khoản được phép phát TikTok LIVE và cách
+   kết nối phù hợp với quy định áp dụng cho kênh của bạn. Trình đọc chat
+   TikTokLive là thư viện bên thứ ba, có thể bị giới hạn hoặc ngừng hoạt
+   động khi TikTok đổi cách cấp kết nối. Bạn vẫn có thể nhập lời thoại
+   hoặc bình luận từ bảng điều khiển để diễn tập.
+
+   Cài tùy chọn TikTokLive từ PowerShell trong thư mục dự án:
+      .\02-CAI-CONG-CU.bat -BoQuaOBS -ThemDocTikTok
+   Mở bảng điều khiển → Kết nối. Điền @username của chủ phòng,
+   bật đọc bình luận và Lưu kết nối. Mở lại Bông, rồi thử một câu
+   ở phòng TikTok LIVE thật từ tài khoản khác. Xem Bình luận thật
+   và Xử lý chat trong tab Bàn LIVE. Cài đặt kết nối lưu theo kênh
+   trong sound-data. Xem KET-NOI-VA-GIONG-NOI.txt để dò lỗi.
+
+C. Kiểm tra TikTok cấp cách phát nào cho tài khoản trong LIVE Center:
+   OBS/RTMP cần thông tin máy chủ và stream key do TikTok cấp. Nếu có,
+   nhập trực tiếp trong Settings → Stream của OBS. Nếu chỉ có quyền
+   TikTok LIVE Studio, kiểm tra các nguồn mà phiên bản đã cài hỗ trợ.
+   OBS Virtual Camera chỉ đưa hình. Kiểm chứng tuyến âm thanh riêng
+   trước khi sử dụng LIVE Studio làm đầu ra. Nếu chưa có quyền LIVE,
+   tiếp tục ghi thử ở phần 3 trong lúc chờ.
+
+   Dùng câu thông báo trên cảnh hoặc mô tả để người xem biết đây là
+   nhân vật AI. Giữ người vận hành theo dõi và duyệt lời thoại trong
+   những buổi đầu. Bộ lọc từ khóa chỉ là lớp hỗ trợ. Với TikTok Shop,
+   kiểm tra quy định riêng về tương tác trực tiếp và giọng AI trước
+   khi dùng nhân vật cho nội dung bán hàng.
+
+5. HAI KÊNH TRÊN CÙNG PC
+
+Bấm 04-CHAY-HAI-KENH.bat khi đã đóng những cửa sổ chạy kênh cũ.
+  Kênh 1 · 8765 · Bông Đào · Hoài Mỹ
+  Kênh 2 · 8766 · Bông Nắng · Nam Minh
+Hồ sơ từng kênh nằm trong profiles. Chỉnh name, port, voice, palette
+(dao, nang, tim, xanh), persona và tiktok_username. Mỗi kênh cần
+cổng khác nhau. Hai hồ sơ có thể dùng chung key. Muốn key riêng cho
+kênh 2, đặt gemini_key_env thành GEMINI_API_KEY_KENH2 và nhập key vào
+dòng tương ứng trong .env.
+
+Khi thực sự phát hai đầu ra, cách dễ quản lý là dùng hai bản OBS
+portable riêng từ trang tải OBS. Giải nén ZIP OBS vào hai thư mục
+riêng, chạy bin\64bit\obs64.exe với tham số --portable --multi cho
+mỗi thư mục, tạo scene/profile riêng rồi nhập URL Browser Source đúng
+cổng, 8765 hoặc 8766. Tắt Desktop Audio cho cả hai như phần 3.
+Mở cả hai, gửi thử hai câu khác nhau và kiểm tra mixer/clip ghi riêng.
+Kiểm tra cả chỉ số encoder, CPU/GPU, mạng và số luồng mà máy chịu được
+trước khi tăng số kênh. Hai tiến trình Bông Hoa chạy riêng nhưng OBS
+vẫn cần đủ tài nguyên để mã hóa nhiều luồng.
+
+6. KHI CẦN SỬA LỖI
+
+- Không mở được bảng điều khiển: đọc dòng lỗi trong cửa sổ chạy, kiểm
+  tra đúng thư mục đã giải nén và địa chỉ 127.0.0.1. Nếu cổng đã dùng,
+  đóng đúng phiên Bông đang chạy hoặc đổi port trong hồ sơ.
+- Không có tiếng: kiểm tra Nguồn phát, tab phát thử còn mở hay không,
+  nút Bật âm thanh, Control audio via OBS, nút mute, track xuất âm
+  và mixer. Sau khi đóng tab phát thử, chờ khoảng 7 giây để OBS nhận
+  quyền phát. Nếu lời thoại mẫu phát được nhưng giọng tiếng Việt lỗi, kiểm
+  tra Internet và edge-tts bằng 02-CAI-CONG-CU.bat -BoQuaOBS.
+- Câu đang chờ mà không phát: bấm Phát câu này trong mục Duyệt và đợi
+  TTS. Mục chờ duyệt hết hạn sau 90 giây. Câu dài hoặc thất bại không
+  chặn cả hàng đợi. Xem dòng trạng thái để biết lỗi cụ thể.
+- Gemini báo 404 hoặc 429: xem model qua --models hoặc quota dự án.
+  Muốn quay về trả lời mẫu, để trống key và khởi động lại.
+- YouTube lọt vào bản ghi: kiểm tra nguồn Audio Output Capture,
+  Application Audio Capture, nguồn mic thu lại loa và Desktop Audio
+  của đúng bản OBS. Ghi lại đoạn thử sau khi chỉnh.
+
+7. THÊM HOẶC ĐỔI ÂM THANH CHO TỪNG HÀNH ĐỘNG
+
+Mở bảng điều khiển của đúng kênh, tìm Âm thanh hành động, chọn một
+hành động rồi chọn MP3 hoặc WAV. File tối đa 4 giây và 1,5 MB.
+Bấm Lưu file. Dùng thanh Âm lượng để chỉnh riêng hiệu ứng. 0% tắt
+tiếng hiệu ứng cho hành động đó. Giọng đọc lời thoại giữ mức riêng.
+Dùng Nghe thử qua nguồn phát khi OBS hoặc tab Mở phát thử đã sẵn sàng.
+Bỏ file đã thêm đưa hành động về file dùng chung hoặc âm có sẵn.
+
+Bạn có thể thêm âm cho cả các hành động trước đây chưa có hiệu ứng,
+ví dụ Vẫy chào hay Chỉ tay. Hiệu ứng thêm vào có thể phát trước lời
+thoại có cùng hành động. Diễn thử chạy động tác, kèm tiếng nếu
+có và âm lượng lớn hơn 0%. Diễn im lặng chỉ chạy phần hình. Dùng
+effects_enabled: false trong hồ sơ và khởi động lại nếu muốn tắt
+hiệu ứng tự động. Nút nghe thử vẫn dùng được.
+
+Mỗi hồ sơ lưu file và mức tiếng trong sound-data/<tên hồ sơ>.
+Sao chép thư mục sound-data khi chuyển máy hoặc nâng cấp bản ZIP.
+File người dùng lưu qua bảng điều khiển ưu tiên hơn file dùng chung
+trong effects. Xem effects/NGUON-AM-THANH.txt để biết nguồn bản thu.
+
+8. CHẠY NHẸ HƠN VÀ ĐO BẰNG OBS
+
+A. Trong bảng điều khiển → Hiệu năng nhân vật, chọn Nhẹ. Chế độ
+   giảm kích thước lớp ảnh Canvas và số lần vẽ của riêng nhân vật.
+   Nguồn OBS cập nhật tự động. Chọn Chuẩn nếu muốn chuyển động mượt hơn.
+B. Bắt đầu một kênh ở 720 × 1280, 30 fps. Nếu OBS có bộ mã hóa
+   phần cứng phù hợp như NVENC, Quick Sync hoặc AMF, thử dùng bộ đó.
+   Tắt những nguồn hoặc tab phát thử dư. Đừng bắt Desktop Audio
+   khi đang nghe YouTube trên cùng máy.
+C. Dùng OBS → View → Stats và Task Manager của Windows. Ghi thử
+   10 phút ở chế độ Chuẩn rồi Nhẹ trong cùng điều kiện. Xem
+   rendering lag, encoding lag, RAM và GPU. Thử hai kênh sau khi
+   một kênh ổn định. Để đo Dropped Frames (Network), kiểm tra ở
+   phiên phát được phép vì ghi cục bộ không dùng đường truyền live.
+D. GitHub Pages phù hợp chia sẻ trang xem mẫu. OBS vẫn dựng và mã
+   hóa video trên PC. Bản hiện tại dùng máy chủ Python cục bộ để
+   phát tiếng và xử lý bình luận. Có thể dùng kho GitHub riêng
+   để sao lưu mã nguồn. Giữ .env và dữ liệu âm thanh riêng trên máy.
+
+9. TRANG CHÍNH THỨC VÀ TÀI LIỆU
+
+Python cho Windows: https://www.python.org/downloads/windows/
+OBS Studio: https://obsproject.com/download
+OBS Browser Source: https://obsproject.com/kb/browser-source
+OBS portable: https://obsproject.com/kb/portable-mode
+WinGet: https://learn.microsoft.com/windows/package-manager/winget/
+Gemini API key: https://aistudio.google.com/api-keys
+Danh sách model Gemini: https://ai.google.dev/gemini-api/docs/models
+Edge TTS: https://github.com/rany2/edge-tts
+eSpeak NG: https://github.com/espeak-ng/espeak-ng/releases
+TikTokLive (bên thứ ba): https://github.com/isaackogan/TikTokLive
+Trợ giúp TikTok LIVE: https://support.tiktok.com/en/live-gifts-wallet/tiktok-live/issues-with-tiktok-live
+TikTok Shop · Tương tác LIVE: https://seller-vn.tiktok.com/university/essay?knowledge_id=10010864
+OBS · Hiệu năng mã hóa: https://obsproject.com/kb/encoding-performance-troubleshooting
+GitHub Pages: https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages
+
+Để chỉnh hồ sơ, FAQ, quà và bình chọn, xem TUONG-TAC-LIVE.txt.

@@ -1,0 +1,95 @@
+THỬ 9ROUTER VÀ TIKTOK LIVE STUDIO
+
+A. Thử combo trên PC
+
+1. Mở Dashboard 9Router → Combos. Chọn đúng các model đã kết nối
+   và bấm Create/Save. Tên dùng trong Bông là tên combo, ví dụ
+   live-tiktok. Kiểm tra combo xuất hiện trong danh sách sau khi lưu.
+2. Chạy 06-TEST-9ROUTER.bat từ PC Windows đã kết nối Tailscale.
+   Cả hai hồ sơ đã đặt sẵn combo live-tiktok và Base URL:
+      https://desktop-e9ehht4.tailda5402.ts.net:8443/v1
+   Địa chỉ 127.0.0.1:8765 ở mục C thuộc nguồn hình và tiếng của
+   Bông trên PC.
+3. Dán key do 9Router cấp theo yêu cầu. Cửa sổ nhập ẩn ký tự.
+   Nếu .env đã có ROUTER_API_KEY, trình thử dùng key đó và không
+   hỏi lại. Nếu lỡ chia sẻ key, thay bằng key mới trong Dashboard
+   9Router và cập nhật .env cục bộ. Không đăng key lên GitHub.
+4. 9Router OK và dòng hành động/lời thoại cho biết combo đã trả
+   JSON hợp lệ cho Bông. Trình thử gửi đúng một bình luận mẫu.
+   401/403: kiểm tra key/quyền. 400/404: xem tên đã lưu và Base URL.
+   429 hoặc 5xx: xem Usage/Logs và kiểm tra các model trong combo.
+   Có thể thử tên combo khác bằng tham số --router-model.
+
+B. Dùng 9Router để Bông trả lời bình luận
+
+Cả hai hồ sơ đi kèm đã có ba trường sau. Nếu giữ hồ sơ lấy từ bản
+cũ, ghép các trường này vào JSON và cập nhật trường cùng tên.
+
+  "llm_provider": "9router",
+  "router_base_url": "https://desktop-e9ehht4.tailda5402.ts.net:8443/v1",
+  "router_model": "live-tiktok"
+
+Lưu key trong .env ở dòng ROUTER_API_KEY=. Có thể sao chép từ
+env.example.txt nếu chưa có .env. Đóng phiên cũ rồi chạy 03-CHAY-KENH-1.bat
+và dùng Gửi bình luận mẫu. Mục AI / giọng đọc sẽ ghi 9Router. Có
+thể bật 9Router riêng từng kênh. Đặt router_key_env thành
+ROUTER_API_KEY_KENH2 nếu kênh 2 dùng key khác. Muốn dùng lại API
+Gemini trực tiếp, đặt llm_provider thành "gemini".
+
+C. Chọn phần mềm phát
+
+C1. OBS Studio vẫn dùng được. Mở Browser Source với URL trên
+bảng điều khiển, bật Control audio via OBS, rồi kiểm tra hình
+và tiếng bằng Thử lời thoại mẫu. Giữ cảnh và cấu hình OBS để
+chuyển lại khi cần. Xem hướng dẫn chi tiết trong BAT-DAU.txt.
+
+C2. Xem trước trong TikTok LIVE Studio
+
+1. Bông và 9Router là phần tạo lời thoại. LIVE Studio lấy hình và
+   tiếng của Bông để xem trước và phát. LIVE Studio cần quyền LIVE
+   phù hợp trên tài khoản TikTok.
+2. Giữ 03-CHAY-KENH-1.bat chạy. Đóng tab Mở phát thử và tạm thoát
+   OBS để nhường nguồn cho LIVE Studio. Có thể chờ khoảng 7 giây
+   sau khi nguồn cũ đóng. Trong LIVE Studio chọn cảnh dọc, rồi
+   Thêm nguồn → Link/Liên kết nếu có. Dán URL:
+      http://127.0.0.1:8765/overlay.html?setup=1
+   Bật âm thanh (Turn on sound) nếu hộp thoại nguồn có tùy chọn.
+   Chọn kích thước dọc phù hợp, ví dụ 720 × 1280, và vừa màn hình.
+3. Trong bảng điều khiển, chọn Thả tim → Diễn thử. Nhân vật
+   hiện trái tim dù hành động chưa có file tiếng. Bấm tiếp
+   Thử lời thoại mẫu để kiểm tra hình, khẩu hình và mixer.
+   Dùng chế độ tập/xem trước nếu có. Nếu nguồn hiển thị nút Bật
+   âm thanh, bấm qua giao diện tương tác của nguồn nếu hỗ trợ.
+   Kiểm tra hình và tiếng trước khi phát.
+4. Nếu nguồn Link không nhận localhost hoặc không phát tiếng,
+   có thể giữ OBS làm nguồn hình qua OBS Virtual Camera khi tài
+   khoản/ứng dụng hỗ trợ. Camera ảo chỉ truyền hình. Chọn và kiểm
+   tra đường tiếng riêng trong mixer của LIVE Studio trước khi lên
+   sóng. Có thể thử bắt cửa sổ trình duyệt riêng nếu LIVE Studio
+   có nguồn bắt cửa sổ và nguồn âm thanh phù hợp. Tránh bắt âm
+   toàn PC nếu đang mở YouTube hoặc nhiều kênh.
+
+D. Một kênh hoặc hai kênh
+
+03-CHAY-KENH-1.bat mở Bông Đào, hồ sơ kênh 1, cổng 8765.
+04-CHAY-HAI-KENH.bat mở cả Bông Đào và Bông Nắng, cổng 8765 và
+8766, với bảng điều khiển, nguồn phát, giọng và hàng đợi riêng.
+Thử một kênh trước khi mở hai. Đóng tiến trình 03 đang chạy trước
+khi bấm 04 để tránh cổng 8765 bị trùng. Nếu phát hai tài khoản,
+mỗi kênh cần nguồn video và tài khoản/phiên phát hợp lệ riêng. Bạn có thể dùng OBS cho
+8765 và LIVE Studio cho 8766 nếu cả hai nguồn và tài khoản cho
+phép. Khi chuyển ứng dụng cho cùng một kênh, chỉ mở một nguồn
+trình chiếu đang nhận tiếng của kênh đó tại một thời điểm.
+Hai hồ sơ có thể cùng dùng một server 9Router và cùng combo;
+khi dùng chung tài khoản nhà cung cấp, các lượt gọi có thể chia
+chung hạn mức. Việc mở hai tiến trình Bông không tự phát hai LIVE.
+
+Tài liệu 9Router
+https://github.com/decolua/9router#-api-reference
+https://github.com/decolua/9router/blob/master/gitbook/content/en/features/combos.md
+
+Tài liệu Tailscale Serve
+https://tailscale.com/docs/features/tailscale-serve
+
+Tài liệu TikTok về thử nguồn âm thanh và hình ảnh
+https://seller-us.tiktok.com/university/essay?course_type=1&from=search&knowledge_id=1195537245292331&role=1

@@ -1,0 +1,48 @@
+KẾT NỐI TIKTOK VÀ GIỌNG NÓI CỦA BÔNG
+
+Trình điều khiển có 5 tab: Bàn LIVE, Kết nối, Tương tác,
+Trò chơi & Nhạc, Giọng & Âm thanh.
+
+1. Đọc bình luận TikTok
+   URL 127.0.0.1 dùng đưa hình và tiếng lên OBS hoặc LIVE Studio.
+   Tiến trình Bông đọc bình luận từ phòng TikTok riêng.
+   Chạy 03-CHAY-KENH-1.bat, vào Kết nối, nhập @username của
+   tài khoản đang phát, bật đọc bình luận, Lưu kết nối và mở
+   lại cửa sổ chạy Bông. Nếu báo thiếu TikTokLive, mở PowerShell
+   trong thư mục Bông và chạy:
+      .\02-CAI-CONG-CU.bat -BoQuaOBS -ThemDocTikTok
+   Chỉ nối khi phòng đã phát thật. Mở Bàn LIVE, rồi gửi một câu từ
+   tài khoản khác. Đọc Bình luận thật, Bình luận gần nhất và Xử lý
+   chat. Nếu đang chờ duyệt thì bấm Phát câu này. Khi đã nghe thử
+   ổn, có thể bật Tự phát câu trả lời mới.
+   Bình luận quá ngắn, đã lọc hoặc lặp lại quá gần có thể được
+   bỏ qua. Nếu vẫn 0, xem lỗi kết nối, @username và phòng đã LIVE
+   chưa. Thử lời thoại mẫu kiểm tra riêng phần hình/tiếng.
+
+2. Động tác
+   Tab Tương tác → Ai chọn động tác. Khi bật, AI chọn theo nội
+   dung câu trả lời trong tập hoạt ảnh. Khi tắt, dùng động tác
+   bạn chọn. Lệnh chat, quà và bình chọn dùng luật riêng.
+
+3. Giọng đọc tổng hợp
+   Tab Giọng & Âm thanh cho chọn Hoài Mỹ hoặc Nam Minh và chỉnh
+   tốc độ. Tự động ưu tiên Edge TTS, có thể dùng eSpeak nếu đã cài.
+   Hoài Mỹ/Nam Minh áp dụng cho Edge TTS. Bấm Lưu giọng, rồi
+   Thử giọng đã lưu. Mở nguồn phát để nghe.
+
+4. Dùng chính giọng của bạn
+   Thu một câu FAQ bằng điện thoại hoặc trình ghi âm. Lưu câu FAQ
+   ở tab Tương tác. Sang Giọng & Âm thanh, chọn câu đó và tải
+   đúng lời đã thu, MP3 hoặc WAV tối đa 30 giây và 1,5 MB.
+   Khi FAQ khớp, Bông phát bản thu và nhép miệng theo tiếng đó.
+   Bản thu phát được dù máy chưa cài giọng tổng hợp. Nếu sửa nội
+   dung FAQ hoặc sửa lời trong hàng duyệt, Bông dùng TTS để tránh
+   phát nhầm câu cũ. Mỗi bản thu thuộc riêng kênh.
+   Phát bản thu không cần GPU để tổng hợp giọng. Muốn đọc nội
+   dung mới bằng giọng thu của bạn, cần bộ TTS nhân bản giọng.
+   Gói này dùng TTS có sẵn cho câu mới. Dịch vụ nhân bản giọng
+   trên máy chủ là một lựa chọn nếu muốn tránh chạy mô hình giọng
+   trên GPU máy Windows.
+
+Cài đặt kết nối, giọng và bản thu lưu dưới sound-data theo kênh.
+Mang thư mục sound-data theo khi nâng cấp hoặc chuyển máy.

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Thử nhân vật · Bông Hoa Live</title>
+  <link rel="stylesheet" href="giao-dien.css">
+  <script src="hieu-ung-data.js" defer></script>
+  <script src="hieu-ung.js" defer></script>
+  <script src="nhan-vat.js" defer></script>
+  <script src="thu.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><span class="mark" aria-hidden="true">✿</span> Bông Hoa Live</div>
+      <h1>Thử nhân vật</h1>
+      <p>Bấm Trò chuyện để nghe Bông nói. Thử Cười lớn, Ngạc nhiên và Ngáp ngủ để nghe hiệu ứng đi cùng chuyển động.</p>
+    </header>
+    <div class="preview-grid">
+      <section class="stage" aria-label="Sân khấu xem trước">
+        <canvas id="flower" width="480" height="530" role="img" aria-label="Gián hoạt hình đội mũ bông hoa năm cánh"></canvas>
+        <p class="stage-caption" id="caption" aria-live="polite">Đứng chờ</p>
+      </section>
+      <section class="panel preview-controls" aria-label="Điều khiển nhân vật">
+        <div>
+          <h2>Hành động</h2>
+          <div id="actions" class="actions"></div>
+        </div>
+        <div class="row">
+          <button class="primary" id="effect">Phát hiệu ứng</button>
+          <button id="sound">Thử lời thoại</button>
+          <button id="sequence">Xem lần lượt</button>
+          <button id="stop" class="stop">Dừng</button>
+        </div>
+        <label>Màu cánh hoa
+          <select id="palette">
+            <option value="dao">Hồng đào</option>
+            <option value="nang">Vàng nắng</option>
+            <option value="tim">Tím</option>
+            <option value="xanh">Xanh bạc hà</option>
+          </select>
+        </label>
+        <small>Trang này chạy ngoại tuyến với bản thu có sẵn. Nút Phát hiệu ứng phát lại tiếng của động tác đang chọn.</small>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

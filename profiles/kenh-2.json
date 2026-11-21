@@ -1,0 +1,16 @@
+{
+  "name": "Bông Nắng",
+  "port": 8766,
+  "palette": "nang",
+  "voice": "vi-VN-NamMinhNeural",
+  "voice_engine": "auto",
+  "effects_enabled": true,
+  "gemini_model": "gemini-3.5-flash-lite",
+  "gemini_key_env": "GEMINI_API_KEY",
+  "tiktok_username": "",
+  "tiktok_enabled": false,
+  "persona": "Xưng là Nắng, nói tiếng Việt ngắn gọn, hào hứng và thân thiện.",
+  "llm_provider": "9router",
+  "router_base_url": "https://desktop-e9ehht4.tailda5402.ts.net:8443/v1",
+  "router_model": "live-tiktok"
+}

@@ -1,0 +1,72 @@
+TƯƠNG TÁC LIVE · CHỈNH TRONG BẢNG ĐIỀU KHIỂN
+
+1. Chạy 03-CHAY-KENH-1.bat. Mở tab Tương tác để chỉnh luật, tab
+   Trò chơi & Nhạc để mở bình chọn. Mỗi kênh có cài đặt riêng. Cài đặt và nhạc được lưu
+   cùng hồ sơ kênh trong sound-data.
+
+2. Nhập hồ sơ công khai, chẳng hạn cách xưng hô và câu chuyện của
+   chủ kênh. Bông dùng hồ sơ khi gọi AI đã cấu hình. Thêm FAQ theo
+   cụm từ cụ thể, ví dụ “lịch live”. Khi bình luận chứa cụm đã lưu,
+   Bông dùng câu bạn viết và áp dụng chế độ duyệt/phát hiện tại.
+   Chỉ nhập thông tin được phép đọc trên sóng. Phiên bản này tra
+   FAQ từ tệp cục bộ. Chưa cần n8n, tài khoản Google hay RAG.
+
+3. Bạn có thể bật AI chọn động tác cho lời thoại thường hoặc
+   chọn một động tác cố định. Lệnh chat khớp đúng từ khóa đã lưu
+   (ví dụ !tim). Luật quà khớp tên hoặc ID quà và bỏ qua các tín
+   hiệu trung gian của chuỗi quà. Chức năng quà tắt lúc bắt đầu.
+   Chỉnh luật, bật rồi Lưu. Tester Gửi quà thử dùng được trước
+   khi LIVE. Động tác bấm trên bảng điều khiển ưu tiên các mục
+   chưa phát. Nút Dừng tắt nhạc, hủy vòng, xóa hàng đợi.
+   Lời cảm ơn được đọc nếu có TTS. Khi chưa có TTS, Bông vẫn diễn.
+
+4. Bông DJ
+   Chọn hai tệp MP3/WAV có quyền phát LIVE, tối đa 10 MB mỗi bài.
+   Bấm Nạp A và Nạp B. Đặt tên mỗi bài, chỉnh âm lượng và Lưu.
+   Bấm Bông DJ · A/B. Khán giả gõ A hoặc B, mỗi người tính một
+   phiếu đầu tiên. Hết giờ, bài thắng được phát lặp làm nền.
+   Hòa hoặc chưa có phiếu thì giữ bài hiện tại. Có nút Phát A,
+   Phát B và Tắt nhạc. Nhạc nhỏ xuống khi Bông phát lời thoại.
+
+5. Chọn động tác A/B
+   Chọn động tác A và B trong mục Luật bình chọn và Lưu. Mở
+   vòng, thử gửi A hoặc B từ hai tên viewer mẫu khác nhau.
+   Hết giờ, Bông diễn động tác thắng. Hòa thì hiển thị hòa phiếu.
+
+6. Cả phòng gọi Bông bay
+   Chọn số người cần và thời gian rồi Lưu. Mở vòng. Mỗi người
+   gõ !bay một lần, đủ số người thì Bông bay ngay.
+
+7. Thử trên nguồn đang dùng
+   Dùng Mở phát thử trước khi chuyển sang nguồn OBS hoặc LIVE
+   Studio. Nguồn nhân vật hiển thị vòng chơi, số phiếu và kết
+   quả. Nếu trình duyệt chặn nhạc, dùng Bật âm thanh trên nguồn.
+   Nhạc này nằm trong âm thanh của nguồn Bông. Tắt nguồn nhạc
+   nền cũ nếu đang phát trùng trong OBS hoặc LIVE Studio.
+   Khi kết nối phòng TikTok thật, thử lại quà và mixer trước khi
+   vận hành cả buổi. Giữ chế độ duyệt lời thoại khi mới thử.
+
+8. Nhận ra người xem quay lại và chào/cảm ơn
+   Bật Ghi nhớ người xem và Lưu. Bông lưu mã băm cục bộ theo ID
+   TikTok khi có, dùng username nếu TikTok thiếu ID. Hồ sơ tối
+   đa 1.000 người, giữ 30 ngày từ lần cập nhật gần nhất. Bông
+   không lưu bình luận nguyên văn. Nút Xóa bộ nhớ kênh xóa dữ
+   liệu riêng của kênh. !quen xóa sở thích đang có và ngừng nhớ
+   tài khoản cho tới khi hết thời hạn hoặc họ tự đặt lại sở thích.
+   !nho lofi và !nho vui là hai cách viewer tự đặt sở thích.
+   Lưu và nhận diện chạy cục bộ, không gọi API. Tùy chọn gửi sở
+   thích vào AI tắt sẵn. Khi bật, ghi chú ngắn đi kèm lời gọi AI
+   có liên quan đến nhạc và tính vào token đầu vào; ID không gửi.
+
+   Trong Chào và cảm ơn, bật những sự kiện muốn dùng, chọn động
+   tác rồi sửa câu chào, câu chào lại, theo dõi và chia sẻ. {name}
+   được thay bằng tên hiển thị đã lọc. Sự kiện chạy theo mẫu,
+   không gọi 9Router. Có TTS thì Bông đọc. Nguồn vẫn có chữ và
+   động tác khi chưa có TTS. Nút giả lập dùng tên thử riêng.
+   TikTok có thể không gửi JoinEvent cho tất cả người xem.
+
+Nguồn tài liệu TikTokLive về sự kiện khán giả
+https://ttl.docs.isaackogan.com/events/chat-and-audience/
+
+Nguồn tài liệu TikTokLive về chuỗi quà
+https://ttl.docs.isaackogan.com/guides/gifts/

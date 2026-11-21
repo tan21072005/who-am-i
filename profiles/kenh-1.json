@@ -1,0 +1,16 @@
+{
+  "name": "Bông Đào",
+  "port": 8765,
+  "palette": "dao",
+  "voice": "vi-VN-HoaiMyNeural",
+  "voice_engine": "vieneu",
+  "effects_enabled": true,
+  "gemini_model": "gemini-3.5-flash-lite",
+  "gemini_key_env": "GEMINI_API_KEY",
+  "tiktok_username": "wh0_am_i2342",
+  "tiktok_enabled": true,
+  "persona": "Xưng là Bông, nói tiếng Việt gần gũi, thích kể chuyện nhỏ về hoa và màu sắc.",
+  "llm_provider": "9router",
+  "router_base_url": "https://desktop-e9ehht4.tailda5402.ts.net:8443/v1",
+  "router_model": "live-tiktok"
+}

@@ -1,0 +1,58 @@
+PROMPT NÂNG CẤP KHI BÔNG HOA ĐÃ CHẠY OBS
+
+Bạn đang thao tác trên Windows của tôi. Máy đã có một bản Bông
+Hoa Live chạy với OBS. Hãy nâng cấp và giữ cả hai phương pháp
+phát: OBS Studio và TikTok LIVE Studio. Thử từng phương pháp
+bằng một kênh. Server 9Router nằm trên Tailscale,
+còn Bông chạy trên PC này. Dùng combo live-tiktok và Base URL
+đã đặt trong hai hồ sơ đi kèm:
+https://desktop-e9ehht4.tailda5402.ts.net:8443/v1
+Hãy làm theo các bước sau.
+
+1. Xác định thư mục Bông cũ và ZIP mới. Giữ nguyên bản cũ trong
+   lúc thử. Giải nén ZIP mới sang thư mục riêng. Nếu Python đã
+   cài, dùng lại Python đó để tạo môi trường cho bản mới. Chạy
+   02-CAI-CONG-CU.bat -BoQuaOBS nếu cần cài thư viện vào thư mục
+   mới. Giữ nguyên cài đặt, cảnh và hồ sơ OBS hiện có.
+
+2. Chuyển sang thư mục mới các hồ sơ đã chỉnh trong profiles,
+   file hiệu ứng riêng trong effects và thư mục sound-data nếu
+   có. Giữ tên hồ sơ để nhận đúng thư mục âm thanh. Nếu đã có
+   .env, sao chép trực tiếp giữa hai thư mục trên PC và giữ
+   nội dung bí mật. Không copy file vào chat, không in key.
+   Khi chuyển hồ sơ cũ, ghép ba trường llm_provider,
+   router_base_url và router_model từ hồ sơ đi kèm vào hồ sơ
+   cũ. Giữ các giá trị riêng về giọng, màu và tài khoản TikTok.
+   Xem các giá trị chính xác trong 9ROUTER-LIVE-STUDIO.txt.
+
+3. Thử 9Router bằng 06-TEST-9ROUTER.bat với hồ sơ kênh 1. PC
+   cần kết nối Tailscale. Đợi hiện 9Router OK và câu trả lời.
+   Key ROUTER_API_KEY chỉ lưu trong .env trên máy. Nếu tôi chưa
+   nhập key mới, để tôi tự nhập trong cửa sổ ẩn. Chưa có key
+   thì vẫn tiếp tục thử hình và lời thoại mẫu.
+
+4. Đóng phiên Bông cũ nếu còn chạy trên cổng 8765. Chạy
+   03-CHAY-KENH-1.bat của bản mới. Mở bảng điều khiển qua
+   http://127.0.0.1:8765/. Mở phát thử, chọn Thả tim rồi bấm
+   Diễn thử. Kiểm tra trái tim hiện dù hành động chưa có tiếng.
+   Bấm Thử lời thoại mẫu để kiểm tra tiếng và khẩu hình.
+
+5. Để thử OBS, giữ cảnh và Browser Source cũ. Dùng URL nguồn của
+   cùng kênh trên bảng điều khiển. Đóng tab phát thử, mở cảnh OBS
+   và kiểm tra hình cùng thanh âm lượng. Có thể dùng lại cảnh cũ
+   nếu Bông chạy cùng cổng.
+
+6. Để thử LIVE Studio, đóng tab phát thử và tạm đóng OBS để
+   nhường nguồn cùng kênh. Giữ nguyên các cảnh OBS để dùng lại. Nếu LIVE Studio có nguồn Link, thêm
+   http://127.0.0.1:8765/overlay.html?setup=1. Bật âm thanh
+   nguồn nếu có công tắc. Kiểm tra hình và mixer ở chế độ xem
+   trước. Nếu Link không nhận hoặc không có tiếng, đọc mục C
+   trong 9ROUTER-LIVE-STUDIO.txt để thử nguồn hình và âm thanh
+   riêng. Không công khai máy chủ hay bấm Go LIVE khi đang thử.
+
+7. Chỉ thử hai kênh nếu tôi yêu cầu. Kênh 1 là 8765, kênh 2 là
+   8766. Trước khi chạy 04-CHAY-HAI-KENH.bat, đóng phiên 03 đang
+   mở để tránh trùng cổng. Báo rõ phần nào đã xác nhận, phần nào
+   cần tôi kiểm tra, và thư mục của bản mới. Giữ bản cũ để quay lại.
+
+Để chỉnh hồ sơ, FAQ, quà và bình chọn, xem TUONG-TAC-LIVE.txt.

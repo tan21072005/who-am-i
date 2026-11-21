@@ -1,0 +1,23 @@
+THAY HIỆU ỨNG ÂM THANH
+
+Bông có sẵn hiệu ứng từ bản thu CC0. Xem NGUON-AM-THANH.txt.
+Dùng Âm thanh hành động trong bảng điều khiển để thêm file cho
+riêng từng kênh. Có thể đặt tệp .wav hoặc .mp3 tại thư mục này
+nếu muốn dùng chung giữa các kênh. Tên các hiệu ứng có sẵn:
+
+LAUGH   Cười lớn
+SAD     Khóc / nức nở
+TIRED   Ngáp
+SHOCK   Giật mình
+SCARED  Run / lo lắng
+HAPPY   Ăn mừng
+WINGS   Xòe cánh
+FLY     Đập cánh khi bay
+
+Ví dụ LAUGH.wav. Dùng một định dạng cho mỗi tên. Nếu có cả hai,
+chương trình thử WAV trước. Tối đa 4 giây và 1,5 MB mỗi tệp.
+Khi file không có hoặc không đọc được, app dùng hiệu ứng có sẵn.
+File riêng theo kênh được ưu tiên. Bấm Nghe thử qua nguồn phát để kiểm tra.
+
+Chỉ dùng file bạn có quyền đưa vào livestream. Với nguồn trên
+mạng, giữ lại link, tác giả và thông tin giấy phép.

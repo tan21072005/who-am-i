@@ -1,0 +1,35 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Backups & temporary files
+*.bak
+backup-*/
+*.tmp
+temp/
+
+# Audio outputs / tests
+kiem-tra-am-thanh/
+sound-data/
+*.wav
+*.mp3
+*.clip
+*.audio
+
+# OS artifacts
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

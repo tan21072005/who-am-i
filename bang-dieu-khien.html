@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Điều khiển · Bông Hoa Live</title>
+  <link rel="stylesheet" href="giao-dien.css">
+  <script src="nhan-vat.js" defer></script>
+  <script src="ket-noi.js" defer></script>
+  <script src="dieu-khien.js" defer></script>
+  <script src="cai-dat.js" defer></script>
+  <script src="tuong-tac.js" defer></script>
+  <script src="tro-ly.js" defer></script>
+  <script src="thiet-lap.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="control-header">
+      <div class="brand"><span class="mark" aria-hidden="true">✿</span> Bông Hoa Live</div>
+      <h1 id="channel">Bảng điều khiển</h1>
+    </header>
+    <form id="interaction-settings" novalidate></form>
+
+<nav class="control-tabs" aria-label="Bảng điều khiển" role="tablist"><button type="button" role="tab" id="tab-live" aria-controls="pane-live" aria-selected="true" tabindex="0" data-tab="live">Bàn LIVE</button><button type="button" role="tab" id="tab-assistant" aria-controls="pane-assistant" aria-selected="false" tabindex="-1" data-tab="assistant">Trợ lý LIVE</button><button type="button" role="tab" id="tab-setup" aria-controls="pane-setup" aria-selected="false" tabindex="-1" data-tab="setup">Kết nối</button><button type="button" role="tab" id="tab-rules" aria-controls="pane-rules" aria-selected="false" tabindex="-1" data-tab="rules">Tương tác</button><button type="button" role="tab" id="tab-games" aria-controls="pane-games" aria-selected="false" tabindex="-1" data-tab="games">Trò chơi & Nhạc</button><button type="button" role="tab" id="tab-voice" aria-controls="pane-voice" aria-selected="false" tabindex="-1" data-tab="voice">Giọng & Âm thanh</button></nav>
+<section class="stack control-pane" id="pane-live" role="tabpanel" aria-labelledby="tab-live">
+<div class="dashboard-grid">
+<div class="stack">
+<section class="panel stack">
+          <h2>Trạng thái kênh</h2>
+          <dl class="status-list">
+            <div><dt>Nguồn phát</dt><dd id="source">Đang kiểm tra…</dd></div>
+            <div><dt>AI / giọng đọc</dt><dd id="services">—</dd></div>
+            <div><dt>TikTok LIVE</dt><dd id="tiktok">—</dd></div>
+            <div><dt>Bình luận thật</dt><dd id="tiktok-received">0</dd></div>
+<div><dt>Bình luận gần nhất</dt><dd id="tiktok-last">—</dd></div>
+<div><dt>Xử lý chat</dt><dd id="chat-stage">—</dd></div>
+<div><dt>Động tác khi chat</dt><dd id="gesture-mode">—</dd></div>
+<div><dt>Hàng đợi</dt><dd id="queue">—</dd></div>
+          </dl>
+          <div class="row">
+            <button class="stop" id="mute">Dừng và xóa hàng đợi</button>
+            <button id="resume">Chạy tiếp</button>
+          </div>
+          <p class="notice" id="status-message" role="status">Đang kết nối…</p>
+        </section>
+</div>
+<div class="stack">
+<section class="panel stack">
+          <h2>Gửi lệnh thử</h2>
+          <label for="text">Lời thoại hoặc bình luận
+            <textarea id="text" maxlength="480" placeholder="Ví dụ: Kể chuyện cười đi Bông"></textarea>
+          </label>
+          <label for="action">Hành động
+            <select id="action"></select>
+          </label>
+          <div class="row">
+            <button id="demo" class="primary">Thử lời thoại mẫu</button>
+            <button id="effect" title="Phát động tác và kèm âm thanh nếu có">Diễn thử</button>
+            <button id="act">Diễn im lặng</button>
+            <button id="speak">Đọc lời thoại</button>
+            <button id="chat">Gửi bình luận mẫu</button>
+            <button id="story">Bông kể chuyện cười ngay</button>
+          </div>
+        </section>
+<section class="panel stack">
+          <h2>Duyệt câu trả lời</h2>
+          <label class="inline"><input type="checkbox" id="auto"> Tự phát câu trả lời mới</label>
+          <small>Nếu chưa bật tự phát, hãy bấm Phát câu này để Bông nói. Câu chờ hết hạn sau 90 giây.</small>
+          <div id="drafts"></div>
+        </section>
+</div>
+</div>
+</section>
+<section class="stack control-pane" id="pane-assistant" role="tabpanel" aria-labelledby="tab-assistant" hidden>
+<div class="dashboard-grid">
+<section class="panel stack">
+<h2>Kịch bản 30 phút</h2>
+<label>Chủ đề buổi LIVE<input id="show-topic" maxlength="200" placeholder="Ví dụ: Bông sắp xếp lại góc học tập"></label>
+<label>Sản phẩm muốn giới thiệu<textarea id="show-product" maxlength="1800" rows="3" placeholder="Tên, đặc điểm, giá, ưu đãi đã xác nhận. Có thể bỏ trống."></textarea></label>
+<label>Tư liệu cho Bông<textarea id="show-notes" maxlength="3000" rows="4" placeholder="Dán dữ kiện đã kiểm tra và những điều muốn Bông nhắc tới."></textarea></label>
+<button id="show-generate">Soạn 30 đoạn bằng 9Router</button>
+<p id="show-note" class="subtle" role="status"></p>
+</section>
+<section class="panel stack">
+<h2>Lời thoại theo phút</h2>
+<label>Chọn phút để sửa<select id="show-minute"></select></label>
+<label>Lời Bông đọc<textarea id="show-line" maxlength="480" rows="5" placeholder="Nhập lời thoại. Để trống nếu muốn nghỉ ở phút này."></textarea></label>
+<div class="row"><button id="show-prev">Phút trước</button><button id="show-next">Phút sau</button><button id="show-save">Lưu kịch bản</button><button id="show-prepare">Tạo tiếng trước</button></div>
+<h2>Phát trên kênh này</h2><p id="show-clock"></p>
+<div class="row"><button class="primary" id="show-start">Bắt đầu 30 phút</button><button id="show-pause">Tạm dừng</button><button id="show-resume">Tiếp tục</button><button class="stop" id="show-stop">Kết thúc</button></div>
+<small>Mỗi phút tối đa một đoạn. Bông ưu tiên chat và bỏ qua mốc đã trôi. Tạm dừng hoặc kết thúc sẽ để câu đang đọc nói hết.</small>
+<p id="show-message" role="status"></p>
+</section></div></section>
+<section class="stack control-pane" id="pane-setup" role="tabpanel" aria-labelledby="tab-setup" hidden>
+<div class="dashboard-grid">
+<div class="stack">
+<section class="panel stack">
+  <h2>Đọc bình luận TikTok</h2>
+  <label>@username của kênh đang LIVE <input id="stream-user" maxlength="33" autocomplete="off" placeholder="@ten_kenh"></label>
+  <label class="inline"><input type="checkbox" id="stream-enabled"> Bật đọc bình luận TikTok</label>
+  <button id="stream-save" type="button" class="primary">Lưu kết nối</button>
+  <p id="stream-note" class="subtle" role="status"></p>
+  <p class="subtle">Sau khi đổi kết nối, đóng cửa sổ chạy Bông rồi mở lại. Nếu thiếu TikTokLive, mở PowerShell trong thư mục Bông và chạy:</p>
+  <code class="code">.\02-CAI-CONG-CU.bat -BoQuaOBS -ThemDocTikTok</code>
+</section>
+</div>
+<div class="stack">
+<section class="panel stack">
+          <h2>Nguồn nhân vật để phát</h2>
+          <code class="code" id="overlay-url"></code>
+          <div class="row">
+            <button id="copy">Chép URL</button>
+            <a class="button" href="/overlay.html?setup=1&captions=1" target="_blank" rel="noopener">Mở phát thử</a>
+          </div>
+          <details class="source-help">
+            <summary>Phương pháp 1 · OBS Studio</summary>
+            <p>Thêm Browser Source, dán URL trên và bật Control audio via OBS. Kiểm tra bằng nút Thử lời thoại mẫu.</p>
+          </details>
+          <details class="source-help">
+            <summary>Phương pháp 2 · TikTok LIVE Studio</summary>
+            <p>Để Cốc Cốc phát tiếng, mở URL ở trên trong Cốc Cốc. Trong LIVE Studio, thêm Link chỉ hiển thị hình và tắt Turn on sound.</p>
+            <code class="code" id="mirror-url"></code>
+          </details>
+          <small>Mỗi kênh cấp âm thanh cho một nguồn tại một thời điểm. Đóng tab phát thử và nguồn đang giữ kênh trước khi đổi phương pháp.</small>
+        </section>
+<section class="panel stack">
+          <h2>Hiệu năng nhân vật</h2>
+          <label>Chế độ hiển thị
+            <select id="performance-mode" disabled>
+              <option value="normal">Chuẩn</option>
+              <option value="light">Nhẹ</option>
+            </select>
+          </label>
+          <small>Chế độ Nhẹ giảm độ phân giải và số lần vẽ nhân vật. OBS có cài đặt độ phân giải và FPS riêng.</small>
+          <p id="performance-note" class="subtle" role="status"></p>
+        </section>
+</div>
+</div>
+</section>
+<section class="stack control-pane" id="pane-rules" role="tabpanel" aria-labelledby="tab-rules" hidden>
+<div class="dashboard-grid">
+<div class="stack">
+<section class="panel stack">
+              <h3>Trò chuyện và kể chuyện</h3>
+              <label>Độ dài câu trả lời AI
+                <select form="interaction-settings" id="live-reply_length">
+                  <option value="short">Ngắn · tối đa 180 ký tự</option>
+                  <option value="normal">Vừa · tối đa 320 ký tự</option>
+                  <option value="long">Dài · tối đa 480 ký tự</option>
+                </select>
+              </label>
+              <label class="inline"><input form="interaction-settings" id="live-idle_on" type="checkbox"> Bông tự nói khi phòng yên lặng</label>
+              <label>Chờ bao lâu trước khi Bông tự nói (giây)
+                <input form="interaction-settings" id="live-idle_seconds" type="number" min="15" max="600" required>
+              </label>
+              <label>Chuyện hoặc lời dẫn để Bông tự nói
+                <textarea form="interaction-settings" id="live-idle_script" maxlength="2000" placeholder="Để trống để dùng chuyện và lời dẫn có sẵn"></textarea>
+              </label>
+              <small>Mỗi dòng là một lượt nói, tối đa 480 ký tự. Bông đọc lần lượt khi không có câu chờ phát hoặc chờ duyệt.</small>
+            </section>
+<section class="panel stack">
+              <h3>Hồ sơ công khai và FAQ</h3>
+              <label>Hồ sơ để Bông trò chuyện
+                <textarea form="interaction-settings" id="live-profile" maxlength="900" placeholder="Cách xưng hô, sở thích, câu chuyện kênh có thể kể"></textarea>
+              </label>
+              <small>Khi tìm được cụm từ FAQ trong bình luận, Bông dùng câu bạn ghi. Mục duyệt lời thoại vẫn áp dụng.</small>
+              <div id="live-faq" class="stack"></div>
+              <button type="button" data-add-rule="faq">Thêm câu FAQ</button>
+            </section>
+<details class="panel"><summary>Ghi nhớ người xem</summary><div class="stack details-body">
+          
+          <label class="inline"><input form="interaction-settings" id="live-memory_on" type="checkbox"> Nhận ra người đã từng vào hoặc trò chuyện</label>
+          <label class="inline"><input form="interaction-settings" id="live-memory_context" type="checkbox"> Gửi sở thích đã lưu vào câu trả lời AI</label>
+          <small>Ghi nhớ cục bộ không tốn token 9Router. Khi bật gửi sở thích, câu hỏi liên quan có thể dùng thêm token đầu vào. Người xem gõ !nho lofi, !nho vui hoặc !quen.</small>
+          <p id="live-memory-count" class="subtle"></p>
+          <button type="button" id="live-memory-clear">Xóa bộ nhớ kênh</button>
+        </div></details>
+</div>
+<div class="stack">
+<section class="panel stack">
+              <h3>Cảm ơn lượt thích</h3>
+              <label class="inline"><input form="interaction-settings" id="live-like_on" type="checkbox"> Cảm ơn khi người xem thả tim</label>
+              <label>Lời cảm ơn <input form="interaction-settings" id="live-like_text" maxlength="150" placeholder="Bông cảm ơn {name} đã thả tim!"></label>
+              <label>Động tác khi cảm ơn <select form="interaction-settings" id="live-like_action"></select></label>
+              <label>Giãn giữa hai lần cảm ơn lượt thích (giây)
+                <input form="interaction-settings" id="live-like_cooldown" type="number" min="5" max="300" required>
+              </label>
+              <small>Dùng {name} để gọi tên. Để trống nếu chỉ muốn Bông diễn. Lưu trước khi thử.</small>
+              <div class="row"><button type="button" data-test-audience="like">Thử lượt thích</button></div>
+            </section>
+<section class="panel stack">
+              <h3>Ai chọn động tác</h3>
+              <label class="inline"><input form="interaction-settings" id="live-ai_actions" type="checkbox"> AI chọn biểu cảm khi trò chuyện</label>
+              <label>Động tác khi tắt AI chọn biểu cảm <select form="interaction-settings" id="live-fixed_action"></select></label>
+              <label class="inline"><input form="interaction-settings" id="live-commands_on" type="checkbox"> Dùng lệnh chat cố định</label>
+              <div id="live-commands" class="stack"></div>
+              <button type="button" data-add-rule="commands">Thêm lệnh chat</button>
+            </section>
+<details class="panel"><summary>Quà TikTok</summary><div class="stack details-body">
+              
+              <label class="inline"><input form="interaction-settings" id="live-gifts_on" type="checkbox"> Phản ứng với quà</label>
+              <small>Dùng tên quà hiển thị hoặc ID quà. Bạn có thể để trống lời cảm ơn để Bông chỉ diễn động tác.</small>
+              <div id="live-gifts" class="stack"></div>
+              <button type="button" data-add-rule="gifts">Thêm luật quà</button>
+              <label>Giãn lời chào, lệnh chat và quà (giây)
+                <input form="interaction-settings" id="live-cooldown" type="number" min="2" max="60" required>
+              </label>
+            </div></details>
+<details class="panel"><summary>Chào và cảm ơn</summary><div class="stack details-body">
+          
+          <small>Chèn {name} để Bông gọi tên. Có giãn thời gian giữa các lời chào để tránh nói dồn.</small>
+          <div class="dashboard-grid">
+            <div class="stack">
+              <label class="inline"><input form="interaction-settings" id="live-join_on" type="checkbox"> Chào khi vào LIVE</label>
+              <label>Động tác chào <select form="interaction-settings" id="live-join_action"></select></label>
+              <label>Lời chào <input form="interaction-settings" id="live-join_text" maxlength="150"></label>
+              <label>Lời chào người quay lại <input form="interaction-settings" id="live-return_text" maxlength="150"></label>
+            </div>
+            <div class="stack">
+              <label class="inline"><input form="interaction-settings" id="live-follow_on" type="checkbox"> Cảm ơn theo dõi</label>
+              <label>Động tác khi được theo dõi <select form="interaction-settings" id="live-follow_action"></select></label>
+              <label>Lời cảm ơn <input form="interaction-settings" id="live-follow_text" maxlength="150"></label>
+              <label class="inline"><input form="interaction-settings" id="live-share_on" type="checkbox"> Cảm ơn chia sẻ</label>
+              <label>Động tác khi được chia sẻ <select form="interaction-settings" id="live-share_action"></select></label>
+              <label>Lời cảm ơn <input form="interaction-settings" id="live-share_text" maxlength="150"></label>
+            </div>
+          </div>
+        </div></details>
+</div>
+</div><button class="primary" form="interaction-settings" type="submit">Lưu cài đặt tương tác</button>
+</section>
+<section class="stack control-pane" id="pane-games" role="tabpanel" aria-labelledby="tab-games" hidden>
+<div class="dashboard-grid">
+<div class="stack">
+<section class="panel stack">
+              <h3>Luật bình chọn</h3>
+              <label class="inline"><input form="interaction-settings" id="live-announce_results" type="checkbox"> Bông đọc kết quả khi có lựa chọn thắng</label>
+              <label>Thời gian một vòng (giây) <input form="interaction-settings" id="live-duration" type="number" min="10" max="120" required></label>
+              <label>Số người để Bông bay <input form="interaction-settings" id="live-goal" type="number" min="1" max="100" required></label>
+              <label>Động tác A <select form="interaction-settings" id="live-scene_a"></select></label>
+              <label>Động tác B <select form="interaction-settings" id="live-scene_b"></select></label>
+            </section>
+<section class="panel stack">
+          <h3>Mở vòng chơi</h3>
+          <div class="row">
+            <button type="button" data-poll="music">Bông DJ · A/B</button>
+            <button type="button" data-poll="flight">Cả phòng gọi Bông bay</button>
+            <button type="button" data-poll="scene">Chọn động tác · A/B</button>
+            <button type="button" id="live-cancel">Hủy vòng</button>
+          </div>
+          <p id="live-round" role="status">Chưa mở vòng chơi.</p>
+        </section>
+</div>
+<div class="stack">
+<section class="panel stack">
+          <h3>Nhạc nền</h3>
+          <small>Dùng MP3 hoặc WAV tối đa 10 MB mỗi bài. Chọn nhạc bạn có quyền dùng khi phát LIVE. Nhạc tự nhỏ xuống khi Bông phát lời thoại.</small>
+          <div class="dashboard-grid">
+            <div class="stack">
+              <label>Tên lựa chọn A <input form="interaction-settings" id="live-a_title" maxlength="36" required></label>
+              <label>File nhạc A <input form="interaction-settings" id="music-file-A" type="file" accept=".mp3,.wav"></label>
+              <div class="row"><button type="button" data-music-upload="A">Nạp A</button><button type="button" data-music-play="A">Phát A</button><small id="music-status-A"></small></div>
+            </div>
+            <div class="stack">
+              <label>Tên lựa chọn B <input form="interaction-settings" id="live-b_title" maxlength="36" required></label>
+              <label>File nhạc B <input form="interaction-settings" id="music-file-B" type="file" accept=".mp3,.wav"></label>
+              <div class="row"><button type="button" data-music-upload="B">Nạp B</button><button type="button" data-music-play="B">Phát B</button><small id="music-status-B"></small></div>
+            </div>
+          </div>
+          <label>Âm lượng nhạc nền (%) <input form="interaction-settings" id="live-volume" type="number" min="0" max="100" required></label>
+          <div class="row"><button type="button" id="live-music-stop">Tắt nhạc</button></div>
+        </section>
+<details class="panel"><summary>Mô phỏng bình luận và quà</summary><div class="stack details-body">
+          
+          <label>Tên người xem thử <input id="live-viewer" maxlength="45" value="Viewer thử"></label>
+          <label>Bình luận <input id="live-comment" maxlength="220" placeholder="A, B, !tim hoặc !bay"></label>
+          <button type="button" id="live-test-chat">Gửi bình luận thử</button>
+          <label>Tên hoặc ID quà <input id="live-gift" maxlength="90" value="Hoa hồng"></label>
+          <button type="button" id="live-test-gift">Gửi quà thử</button>
+          <div class="row">
+            <button type="button" data-test-audience="join">Thử vào LIVE</button>
+            <button type="button" data-test-audience="follow">Thử theo dõi</button>
+            <button type="button" data-test-audience="share">Thử chia sẻ</button>
+          </div>
+        </div></details>
+</div>
+</div><button class="primary" form="interaction-settings" type="submit">Lưu cài đặt tương tác</button>
+</section>
+<section class="stack control-pane" id="pane-voice" role="tabpanel" aria-labelledby="tab-voice" hidden>
+<div class="dashboard-grid">
+<div class="stack">
+<section class="panel stack">
+  <h2>Giọng tổng hợp</h2>
+  <label>Giọng Edge TTS
+    <select id="speech-voice"><option value="vi-VN-HoaiMyNeural">Hoài Mỹ</option><option value="vi-VN-NamMinhNeural">Nam Minh</option></select>
+  </label>
+  <label>Phương thức đọc
+    <select id="speech-engine"><option value="auto">Tự động · Ưu tiên Edge TTS</option><option value="edge">Edge TTS · Trực tuyến</option><option value="vieneu">VieNeu · GPU NVIDIA CUDA</option><option value="espeak">eSpeak NG · Cục bộ</option></select>
+  </label>
+  <label>Tốc độ Edge / eSpeak (% so với bình thường) <input type="number" id="speech-rate" min="-30" max="30"></label>
+  <div class="row"><button id="speech-save" type="button" class="primary">Lưu giọng</button><button id="speech-test" type="button">Thử giọng đã lưu</button></div>
+  <p id="speech-note" class="subtle" role="status"></p>
+</section>
+<section class="panel stack">
+  <h2>Bản thu của bạn cho FAQ</h2>
+  <p class="subtle">Lưu câu trong mục Tương tác trước. Tải lên chính câu trả lời bạn đã thu. Bông nhép miệng theo bản thu, tối đa 1,5 MB mỗi file.</p>
+  <label>Câu FAQ <select id="record-faq"></select></label>
+  <label>Bản thu MP3 hoặc WAV <input type="file" id="record-file" accept=".mp3,.wav,audio/mpeg,audio/wav"></label>
+  <div class="row"><button type="button" id="record-save">Lưu bản thu</button><button type="button" id="record-play">Nghe thử</button><button type="button" id="record-remove">Gỡ bản thu</button></div>
+  <p id="record-note" class="subtle" role="status"></p>
+</section>
+</div>
+<div class="stack">
+<section class="panel stack">
+          <h2>Âm thanh hành động</h2>
+          <label>Hành động cần chỉnh
+            <select id="sound-action" disabled></select>
+          </label>
+          <p id="sound-source" class="subtle">Đang đọc thiết lập…</p>
+          <label>Âm lượng <output id="sound-volume-label">100%</output>
+            <input type="range" id="sound-volume" min="0" max="100" value="100" disabled>
+          </label>
+          <label>Chọn file MP3 hoặc WAV
+            <input type="file" id="sound-file" accept=".mp3,.wav,audio/mpeg,audio/wav" disabled>
+          </label>
+          <small>Tối đa 4 giây và 1,5 MB. Mỗi kênh lưu hiệu ứng riêng.</small>
+          <div class="row">
+            <button type="button" id="sound-upload" disabled>Lưu file</button>
+            <button type="button" id="sound-test" disabled>Nghe thử qua nguồn phát</button>
+            <button type="button" id="sound-reset" disabled>Bỏ file đã thêm</button>
+          </div>
+          <p id="sound-note" class="subtle" role="status"></p>
+        </section>
+</div>
+</div>
+</section>
+<p id="live-status" class="interaction-note" role="status" hidden>Đang tải cài đặt…</p>
+</main>
+</body>
+</html>
