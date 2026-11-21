@@ -413,17 +413,19 @@
     async play(job) {
       this.stop();
       const serial = this.serial;
-      if (!await this.unlock()) throw new Error("unlock");
-      let speech, effect;
-      try {
-        if (job.audio) speech = await BongEffects.decodeClip(this.context, job.audio);
-        else if (job.demo) speech = await this.recording("SPEECH");
-      } catch {
-        throw new Error("decode");
-      }
-      if (job.effect) {
-        try { effect = await this.effect(job.action); } catch { effect = null; }
-        if (!effect && job.requireEffect) throw new Error("effect");
+      const unlocked = await this.unlock();
+      let speech = null, effect = null;
+      if (unlocked) {
+        try {
+          if (job.audio) speech = await BongEffects.decodeClip(this.context, job.audio);
+          else if (job.demo) speech = await this.recording("SPEECH");
+        } catch {
+          if (job.requireEffect) throw new Error("decode");
+        }
+        if (job.effect) {
+          try { effect = await this.effect(job.action); } catch { effect = null; }
+          if (!effect && job.requireEffect) throw new Error("effect");
+        }
       }
       if (serial !== this.serial) return;
       const parts = [];
@@ -432,8 +434,9 @@
       });
       if (speech) parts.push({buffer: speech, offset: effect ? effect.duration + .14 : 0, mouth: true});
       const last = parts.at(-1);
-      const duration = last ? (last.buffer.duration + last.offset) * 1000 : 1850;
-      this.flower.play(job.action, Math.max(duration, job.action === "WINGS" ? 1250 : 0) + 70, !last && job.action === "TALK");
+      const estDuration = Math.max(1850, (job.text ? job.text.split(/\s+/).length * 280 : 1850));
+      const duration = last ? (last.buffer.duration + last.offset) * 1000 : estDuration;
+      this.flower.play(job.action, Math.max(duration, job.action === "WINGS" ? 1250 : 0) + 70, !last && (job.action === "TALK" || Boolean(job.text)));
       this.flower.voiceOn = parts.length > 0;
       await new Promise(resolve => {
         let timer;

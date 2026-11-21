@@ -19,16 +19,6 @@ let claimPrimary = false;
 let resultAccepted = true;
 let playing = null;
 
-function updateCaptionPreview() {
-  if (!isSetup || playing) return;
-  const sample = "Xin chào! Mình là Bông ✨";
-  captionTextNode.textContent = sample;
-  currentCaptionText = sample;
-  captionNode.hidden = parameters.get("captions") !== "1";
-  if (captionPageNode) captionPageNode.hidden = true;
-}
-if (isSetup) updateCaptionPreview();
-
 function splitCaption(text, limit = 12) {
   text = (text || "").trim();
   if (!text) return [];
@@ -164,8 +154,7 @@ function clearPlayback() {
   currentCaptionText = "";
   currentCaptionPage = "";
   if (captionPageNode) captionPageNode.hidden = true;
-  if (isSetup) updateCaptionPreview();
-  else captionNode.hidden = true;
+  captionNode.hidden = true;
 }
 
 async function playJob(job) {
@@ -228,8 +217,7 @@ async function playJob(job) {
   currentCaptionText = "";
   currentCaptionPage = "";
   if (captionPageNode) captionPageNode.hidden = true;
-  if (isSetup) updateCaptionPreview();
-  else captionNode.hidden = true;
+  captionNode.hidden = true;
   ack = {id: job.id, failed};
 }
 
@@ -258,8 +246,7 @@ function showMirror(visual) {
     currentCaptionText = "";
     currentCaptionPage = "";
     if (captionPageNode) captionPageNode.hidden = true;
-    if (isSetup) updateCaptionPreview();
-    else captionNode.hidden = true;
+    captionNode.hidden = true;
     return;
   }
   const now = performance.now();
