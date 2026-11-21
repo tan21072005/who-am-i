@@ -1,0 +1,44 @@
+BÔNG HOA LIVE · KỂ CHUYỆN VÀ THƯ VIỆN KỊCH BẢN
+
+Cài trên Windows
+1. Dùng bản Bông Hoa Live đã có VieNeu GPU và Trợ lý 30 phút.
+2. Kết thúc buổi LIVE rồi đóng đúng tiến trình Bông. Sao lưu 4 file
+   trùng tên trước khi chép 5 file mã trong ZIP vào thư mục đang chạy:
+   app.py, bang-dieu-khien.html, tro-ly.js, tro_ly.py, thu_vien.py.
+   File hướng dẫn dùng để đọc. Cấu hình kênh và dữ liệu nằm trong
+   .env, profiles và sound-data. Giữ các thư mục đó ở chỗ cũ.
+3. Mở lại kênh rồi nhấn Ctrl+F5 trong bảng điều khiển. Kịch bản 30
+   phút cũ xuất hiện trong Thư viện. Dữ liệu truyện mới lưu theo
+   từng kênh ở sound-data/<cổng>/kich-ban/.
+
+Kể truyện và lưu kịch bản
+1. Trợ lý LIVE → Nhập tài liệu hoặc danh sách từ Sheet. Chọn tài liệu
+   Markdown (.md), TXT (UTF-8) hoặc Word (.docx) rồi bấm Nhập thành
+   kịch bản mới. Với Word, dùng kiểu Heading cho tiêu đề chương.
+   File .doc hoặc PDF cần chuyển thành .docx hoặc .txt trước.
+2. Xem lời thoại tại Chọn đoạn để sửa. Tài liệu được chia theo đoạn,
+   giữ thứ tự và nhận các tiêu đề chương. URL được bỏ khỏi lời đọc.
+   Có thể nhập tối đa 12 MB và 6.000 đoạn mỗi kịch bản.
+3. Có thể đọc văn bản đã nhập hoặc chọn một đoạn và bấm AI kể lại
+   phần đã chọn. 9Router soạn tối đa 30 đoạn mỗi lượt đến trước
+   chương sau. Chỉ phần đang soạn được gửi tới 9Router. Xem lại lời
+   kể, sau đó bấm Tạo tiếng trước hoặc Tạo tiếng phần đã chọn.
+4. Chọn Kể từ đầu, Kể tiếp hoặc Phát từ đoạn chọn. Sau khi trả lời
+   chat, Bông nối lại từ đoạn kế tiếp. Khi overlay báo lỗi hoặc đóng
+   giữa đoạn, mở lại nguồn và bấm Tiếp tục để thử lại đoạn đó.
+5. Chọn kịch bản cũ ở Kịch bản đã lưu. Lưu bản sao tạo một mục riêng.
+   Khôi phục phiên bản lấy lại nội dung của một lần lưu trước.
+   Thay đổi lời thoại sẽ đặt lại tiến độ. Dùng Phát từ đoạn chọn
+   nếu muốn tiếp tục từ một vị trí cụ thể sau khi sửa.
+6. Có thể bật tự bắt đầu truyện khi phòng yên lặng trong kịch bản.
+   Tính năng dùng số giây đã chọn ở Tương tác → Tự nói khi phòng
+   yên lặng. Trong lúc kể, Bông không chờ hết số giây này giữa đoạn.
+7. Chọn dùng kịch bản làm tư liệu chat nếu muốn tìm đoạn liên quan
+   để gửi cho 9Router. Bông chỉ gửi tối đa ba đoạn tìm được. Bản
+   này tìm theo từ khóa tiếng Việt, nên câu hỏi rõ tên và chủ đề
+   sẽ dễ tìm được đoạn phù hợp hơn.
+
+Sheet
+Xuất bảng từ Google Sheets thành CSV UTF-8 có một cột tên title.
+Điền chính xác tên kịch bản đã lưu theo thứ tự muốn thấy, mỗi hàng
+một kịch bản. Nút Sắp thư viện theo CSV cập nhật thứ tự danh sách.

@@ -14,6 +14,14 @@ Hệ thống linh vật ảo tương tác thời gian thực cho TikTok LIVE / O
   - **VieNeu · GPU NVIDIA CUDA**: Tăng tốc tạo giọng tự nhiên bằng card đồ họa rời (giọng Hải Đăng siêu tốc, mượt mà).
   - **Edge TTS**: Giọng đọc trực tuyến Microsoft Edge (Hoài Mỹ, Nam Minh).
   - **eSpeak NG**: Giọng đọc ngoại tuyến dự phòng khi mất mạng hoặc không có GPU.
+- **Kể chuyện & Thư viện kịch bản (Story & Script Library)**:
+  - Quản lý thư viện nhiều kịch bản, lưu bản sao, khôi phục các phiên bản cũ.
+  - Nhập tài liệu Markdown (.md), TXT (UTF-8) hoặc Word (.docx) dung lượng lên đến 12 MB, tự chia tách thành tối đa 6.000 đoạn, tự nhận diện tiêu đề chương (Heading) và loại bỏ URL.
+  - Hỗ trợ AI (9Router) kể lại từng phần theo phong cách của Bông.
+  - Phát kịch bản linh hoạt: Kể từ đầu, Kể tiếp hoặc Phát từ đoạn đã chọn; tự động nối lại truyện sau khi trả lời bình luận của khán giả.
+  - Sắp xếp danh sách kịch bản trong thư viện tự động theo file CSV xuất từ Google Sheets.
+  - Tự bắt đầu kể truyện khi phòng LIVE yên lặng.
+  - Sử dụng kịch bản làm tư liệu tham khảo (`grounding`) để AI trả lời đúng nội dung câu chuyện khi khán giả hỏi.
 - **Trợ lý LIVE 30 phút (Kịch bản)**:
   - Soạn kịch bản theo phút bằng AI hoặc tự nhập.
   - Tính năng **Tạo tiếng trước (Pre-generate Audio)**: GPU tổng hợp và lưu trước toàn bộ các đoạn thoại trong vài giây, giúp buổi live diễn ra liên tục, không phụ thuộc vào độ trễ mạng hay API.
@@ -32,6 +40,7 @@ who-am-i/
 ├── giong_noi.py               # Module tổng hợp giọng nói (VieNeu, Edge TTS, eSpeak)
 ├── router_api.py              # Kết nối API 9Router
 ├── thiet_lap.py               # Quản lý cài đặt cấu hình kênh
+├── thu_vien.py                # Xử lý nhập tài liệu truyện (Word .docx, .md, .txt) & CSV Sheet
 ├── tro_ly.py                  # Quản lý kịch bản Trợ lý 30 phút & cache âm thanh
 ├── tuong_tac.py               # Xử lý bình luận TikTok, cử chỉ và hàng đợi
 ├── bang-dieu-khien.html       # Giao diện Bàn điều khiển Web
