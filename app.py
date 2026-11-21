@@ -26,7 +26,7 @@ from urllib.request import Request, urlopen
 
 from kho_tai_lieu import DocumentStore
 from cai_dat_kenh import AUDIO_LIMIT, MODES, Presentation, audio_type
-from giong_noi import SAMPLE_TEXT, Speaker, SpeechError
+from giong_noi import SAMPLE_TEXT, Speaker, SpeechError, is_predominantly_english
 from tro_ly import Rundown, generate_lines, retell_lines
 from thu_vien import MAX_DOCUMENT, csv_titles, document_segments, excerpts, read_document, write_json
 from router_api import DEFAULT_COMBO, LOCAL_ROUTER, RouterError, router_model, router_reply, router_url
@@ -143,6 +143,18 @@ PLAY_TIMEOUT = 60
 MAX_AGE = 90
 EFFECTS = {"LAUGH", "SAD", "TIRED", "SHOCK", "SCARED", "HAPPY", "WINGS", "FLY"}
 STORY_REQUEST = re.compile(r"\b(?:kể|hãy kể)(?:\s+(?:lại|cho|nghe|ngay|một|mẩu|câu|chút|mấy|bài|tôi))*\s+(?:chuyện|truyện)\b|\bchuyện cười\b|\btruyện cười\b", re.I)
+
+
+def is_story_request(text):
+    norm = normalized(text or "")
+    unacc = "".join(c for c in unicodedata.normalize("NFD", norm) if unicodedata.category(c) != "Mn")
+    story_unacc = re.compile(
+        r"\b(?:ke|hay ke|ke lai|ke cho|tell|tell me)\b.*\b(?:chuyen|truyen|story|joke)\b|"
+        r"\b(?:chuyen cuoi|truyen cuoi|funny story|tell a joke|tell joke)\b|"
+        r"\bke (?:gi|chut gi|ti gi) vui\b",
+        re.I
+    )
+    return bool(STORY_REQUEST.search(norm) or story_unacc.search(unacc))
 STORIES = (
     "Có lần Bông mở tiệm làm tóc cho côn trùng. Một bạn kiến hỏi giá uốn râu. Bông bảo: "
     "Mười nghìn một bên. Bạn kiến gật gù: Vậy uốn bên trái thôi, bên phải để làm tóc trước khi giảm giá!",
@@ -265,44 +277,80 @@ def google_call(key, url, payload=None):
 
 
 def generate_reply(config, key, comment):
-    story = bool(STORY_REQUEST.search(normalized(comment)))
+    story = is_story_request(comment)
     limit = REPLY_LENGTHS.get(config.get("reply_length"), REPLY_LENGTHS["normal"])
+    reply_language = config.get("reply_language", "auto")
     if not key:
+        unacc = "".join(c for c in unicodedata.normalize("NFD", normalized(comment)) if unicodedata.category(c) != "Mn").lower()
+        is_en_comment = reply_language == "en" or (reply_language == "auto" and is_predominantly_english(comment))
         if story:
+            if is_en_comment:
+                return "LAUGH", "Once upon a time, Bong opened a salon for tiny insects. A cute little bee asked for a fluffy pollen hairstyle, making everyone buzz with joy!"
             return "LAUGH", STORIES[0]
-        lowered = comment.casefold()
-        if any(word in lowered for word in ("chào", "hello", "vẫy")):
+        if is_en_comment:
+            if any(word in unacc for word in ("chao", "hello", "hi", "hey")):
+                return "WAVE", "Hello! Welcome to my livestream! Great to see you!"
+            if any(word in unacc for word in ("cui chao", "cam on", "bye", "thanks")):
+                return "BOW", "Thank you so much! Wishing you a wonderful and joyful day!"
+            if any(word in unacc for word in ("tim", "love", "cute", "yeu")):
+                return "LOVE", "Sending you lots of love! Thank you for the lovely compliment!"
+            if any(word in unacc for word in ("cuoi", "funny", "laugh", "joke")):
+                return "LAUGH", "Haha, that is so funny! Bong is laughing and flapping wings!"
+            if any(word in unacc for word in ("sad", "buon", "cry")):
+                return "SAD", "Cheer up my friend! Bong is sending you big warm hugs!"
+            if any(word in unacc for word in ("like", "good", "great", "nice")):
+                return "LIKE", "Thumbs up for you! You are truly awesome!"
+            if any(word in unacc for word in ("fly", "wings", "bay", "canh")):
+                return "FLY", "Look! Bong is spreading tiny shiny wings and flying!"
+            if any(word in unacc for word in ("why", "how", "what", "?", "vi sao")):
+                return "THINK", "Hmm, that is such an interesting thought! What do you think?"
+            return "TALK", "Thank you so much for chatting! Bong is happily listening to you!"
+        if any(word in unacc for word in ("chao", "hello", "hi", "vay")):
             return "WAVE", "Bông chào bạn nhé. Cảm ơn bạn đã ghé qua!"
-        if any(word in lowered for word in ("cúi chào", "cảm ơn", "tạm biệt", "bye")):
+        if any(word in unacc for word in ("cui chao", "cam on", "tam biet", "bye", "thanks")):
             return "BOW", "Bông cúi đầu cảm ơn và chúc bạn một ngày thật vui vẻ nha!"
-        if any(word in lowered for word in ("xòe cánh", "xoè cánh", "cánh gián", "bay thử", "tập bay")):
-            return "FLY" if "bay" in lowered else "WINGS", "Nhìn này, Bông có hai cánh gián ở sau lưng!"
-        if any(word in lowered for word in ("cười thử", "cười đi", "buồn cười", "hài quá")):
+        if any(word in unacc for word in ("alo", "bong oi", "oi", "hey")):
+            return "WAVE", "Bông nghe đây ạ! Bạn có chuyện gì vui kể Bông nghe với nè!"
+        if any(word in unacc for word in ("xoe canh", "cang gian", "bay thu", "tap bay", "fly")):
+            return "FLY" if "bay" in unacc or "fly" in unacc else "WINGS", "Nhìn này, Bông có hai cánh gián ở sau lưng!"
+        if any(word in unacc for word in ("cuoi thu", "cuoi di", "buon cuoi", "hai qua", "funny", "laugh")):
             return "LAUGH", "Bông cười đến rung cả cánh rồi!"
-        if any(word in lowered for word in ("khóc thử", "khóc đi", "nức nở", "buồn")):
+        if any(word in unacc for word in ("khoc thu", "khoc di", "nuc no", "buon", "sad")):
             return "SAD", "Bông diễn cảnh buồn một chút thôi nha."
-        if any(word in lowered for word in ("ngáp", "buồn ngủ")):
+        if any(word in unacc for word in ("ngap", "buon ngu", "tired", "sleepy")):
             return "TIRED", "Bông vừa ngáp một cái. Vẫn còn thức nói chuyện với bạn đây."
-        if any(word in lowered for word in ("tim", "dễ thương", "yêu")):
-            return "LOVE", "Bông gửi bạn một trái tim. Cảm ơn bạn đã động viên!"
-        if any(word in lowered for word in ("ngại", "xấu hổ", "e thẹn")):
+        if any(word in unacc for word in ("tim", "de thuong", "yeu", "love", "cute")):
+            return "LOVE", "Bông gửi bạn một trái tim. Cảm ơn bạn đã khen Bông cute nha!"
+        if any(word in unacc for word in ("ngai", "xau ho", "e then", "shy")):
             return "SHY", "Bông hơi ngại ngùng một chút xíu nè hihi."
-        if any(word in lowered for word in ("tức", "giận", "dỗi", "hờn")):
+        if any(word in unacc for word in ("tuc", "gian", "doi", "hon", "angry")):
             return "ANGRY", "Bông hờn dỗi nhẹ một chút xíu thôi nha!"
-        if any(word in lowered for word in ("sợ", "lo", "hoảng")):
+        if any(word in unacc for word in ("so", "lo", "hoang", "scared")):
             return "SCARED", "Ôi, Bông nghe mà giật mình thót tim luôn á!"
-        if any(word in lowered for word in ("chỉ tay", "nhìn kia", "đằng kia")):
+        if any(word in unacc for word in ("chi tay", "nhin kia", "dang kia", "point")):
             return "POINT", "Bạn nhìn xem, Bông đang chỉ tay về phía đó nè!"
-        if any(word in lowered for word in ("đỉnh", "like", "ngón cái", "xuất sắc")):
+        if any(word in unacc for word in ("dinh", "like", "ngon cai", "xuat sac", "good")):
             return "LIKE", "Bông giơ ngón cái khen ngợi bạn tuyệt vời luôn!"
-        if any(word in lowered for word in ("màu", "vì sao", "như thế nào", "?")):
+        if any(word in unacc for word in ("mau", "vi sao", "nhu the nao", "?", "why", "how", "what")):
             return "THINK", "Bông thích màu hồng đào. Còn bạn thích cánh hoa màu gì?"
-        if any(word in lowered for word in ("chúc", "hay quá", "tuyệt", "vui")):
+        if any(word in unacc for word in ("chuc", "hay qua", "tuyet", "vui", "happy")):
             return "HAPPY", "Bông vui quá! Cảm ơn bạn đã ghé chơi."
-        return "TALK", "Cảm ơn bạn đã gửi lời nhắn. Bông đang tập trò chuyện cùng mọi người."
+        return "TALK", "Cảm ơn bạn đã gửi lời nhắn. Bông đang lắng nghe bạn nè!"
+
+    if reply_language == "en":
+        lang_instruction = f"Reply in natural, lively English when spoken aloud, max {limit} characters. "
+    elif reply_language == "vi":
+        lang_instruction = f"Viết tiếng Việt tự nhiên, giàu cảm xúc khi đọc to, tối đa {limit} ký tự. "
+    else:  # "auto"
+        lang_instruction = (
+            f"Phát hiện ngôn ngữ của bình luận và trả lời bằng chính ngôn ngữ đó (tối đa {limit} ký tự). "
+            "Nếu bình luận bằng tiếng Anh, hãy trả lời bằng tiếng Anh. "
+            "Nếu bình luận bằng tiếng Việt hoặc tiếng Việt không dấu (ví dụ: 'ke chuyen di', 'bong oi', 'chao bong'), hãy hiểu đúng và trả lời bằng tiếng Việt có dấu chuẩn xác. "
+        )
+
     instruction = (
-        "Bạn là một con gián hoạt hình đội mũ bông hoa trong một buổi livestream. "
-        f"Viết tiếng Việt tự nhiên khi đọc to, tối đa {limit} ký tự. "
+        "Bạn là một con gián hoạt hình đội mũ bông hoa trong một buổi livestream tên là Bông. "
+        + lang_instruction +
         "Viết câu giàu cảm xúc, ngắt nghỉ câu tự nhiên với dấu phẩy, dấu chấm lửng '...' để giọng đọc AI truyền cảm nhất. "
         "Phát triển ý khi có nội dung đáng kể. Giữ lời chào đơn giản ngắn gọn. "
         "Tự quyết định chọn 1 trong 16 hành động biểu cảm (gesture) phù hợp nhất với cảm xúc và ngữ cảnh câu nói: "
@@ -798,13 +846,25 @@ class Channel:
                     if op in ("start", "prepare"):
                         raise
                     episode = None
-            change_ops = ("new", "open", "duplicate", "restore", "import", "from-document", "save", "generate", "retell", "episodes")
+            change_ops = ("new", "open", "duplicate", "restore", "import", "from-document", "save", "generate", "retell", "episodes", "delete", "delete-segment", "clear-audio")
             if op in change_ops:
                 if show.drafting or show.preparing:
                     raise InteractionError("Kịch bản đang soạn hoặc tạo tiếng. Vui lòng chờ thao tác xong.")
                 if body.get("revision") != show.revision:
                     raise InteractionError("Kịch bản đã thay đổi. Hãy tải lại bảng điều khiển.")
-            if op == "episodes":
+            if op == "preview":
+                return show.preview_audio(body.get("slot"), self.speaker)
+            elif op == "delete":
+                script_id = body.get("id") or show.script_id
+                show.delete_script(script_id)
+                show.draft_note = "Đã xóa kịch bản."
+            elif op == "delete-segment":
+                show.delete_segment(body.get("slot"))
+                show.draft_note = "Đã xóa đoạn."
+            elif op == "clear-audio":
+                show.clear_audio()
+                show.draft_note = "Đã xóa dữ liệu âm thanh đã tạo."
+            elif op == "episodes":
                 show.make_episodes(body.get("minutes"), self.speaker)
             elif op == "new":
                 show.open_blank()
@@ -1222,12 +1282,15 @@ class Channel:
                 if action:
                     self.live_action(action)
                 return
-            if len(text) < 2 or value.startswith("!") or len(self.incoming) >= MAX_QUEUE or now - self.recent.get(identity, -10) < 12:
+            cooldown = self.live.settings.get("cooldown", 5)
+            is_host = "who_am_i" in identity.lower() or "test:" in identity or identity.endswith("wh0_am_i2342")
+            eff_cooldown = 1 if is_host else cooldown
+            if len(text) < 2 or value.startswith("!") or len(self.incoming) >= MAX_QUEUE or now - self.recent.get(identity, -10) < eff_cooldown:
                 if from_tiktok:
                     self.chat_stage = "Bình luận quá ngắn, lệnh chưa có hoặc đang giãn/hàng đợi đầy."
                 return
             if len(self.recent) >= 250:
-                self.recent = {name: at for name, at in self.recent.items() if now - at < 12}
+                self.recent = {name: at for name, at in self.recent.items() if now - at < eff_cooldown}
                 if len(self.recent) >= 250:
                     return
             self.recent[identity] = now
@@ -1264,6 +1327,7 @@ class Channel:
                             continue
                     profile = {**self.config, "persona": settings["profile"] or self.config["persona"],
                                "reply_length": settings["reply_length"],
+                               "reply_language": settings.get("reply_language", "auto"),
                                "viewer_note": viewer_note if settings["memory_on"] and settings["memory_context"] else ""}
                     with self.cv:
                         source_show = self.playback if self.playback.mode in ("running", "paused") else self.show
@@ -1272,7 +1336,7 @@ class Channel:
                         source = self.playback.source_lines(script_id, source_plan["lines"])
                         profile["excerpts"] = excerpts(text, source)
                         profile["ground"] = True
-                    story = bool(STORY_REQUEST.search(normalized(text)))
+                    story = is_story_request(text)
                     if faq:
                         gesture, text = "TALK", faq["reply"]
                         clip = self.operator.recording(faq["trigger"], text)
@@ -1569,11 +1633,16 @@ class Handler(BaseHTTPRequestHandler):
             elif endpoint == "/api/operator":
                 out = channel.operator_settings(body)
             elif endpoint == "/api/documents":
-                if body.get("operation") == "search":
+                op = body.get("operation")
+                if op == "search":
                     document, query = body.get("id"), body.get("query")
                     if not isinstance(document, str) or not isinstance(query, str):
                         raise InteractionError("Chọn tài liệu và nhập cụm từ cần tìm.")
                     out = {"matches": channel.documents.search(document, query)}
+                elif op == "delete":
+                    doc_id = body.get("id")
+                    channel.documents.delete(doc_id)
+                    out = {"message": "Đã xóa tài liệu khỏi kho.", "documents": channel.documents.list()}
                 else:
                     out = {"documents": channel.documents.list()}
             else:

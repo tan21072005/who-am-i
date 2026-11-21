@@ -7,7 +7,7 @@
   const numbers = ["cooldown", "duration", "goal", "volume", "like_cooldown", "idle_seconds"];
   const actionFields = ["fixed_action", "scene_a", "scene_b", "join_action", "follow_action", "share_action", "like_action"];
   const texts = ["profile", "a_title", "b_title", "join_text", "return_text", "follow_text", "share_text",
-    "like_text", "reply_length", "idle_script", ...actionFields];
+    "like_text", "reply_length", "reply_language", "idle_script", ...actionFields];
   const form = get("interaction-settings");
   let ready = false;
   let busy = false;

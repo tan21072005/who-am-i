@@ -8,6 +8,7 @@
   const results = byId("doc-results");
   const uploadButton = byId("doc-upload");
   const findButton = byId("doc-find");
+  const deleteDocButton = byId("doc-delete");
   let watching = "";
   let timer;
   let pending = false;
@@ -41,6 +42,7 @@
       const indexing = documents.find(doc => doc.status === "indexing");
       uploadButton.disabled = Boolean(indexing || pending);
       findButton.disabled = !library.value;
+      if (deleteDocButton) deleteDocButton.disabled = !library.value;
       if (indexing && !pending) {
         note.textContent = `Đang đọc ${indexing.name} · ${indexing.segments} đoạn đã lập chỉ mục`;
       }
@@ -96,8 +98,28 @@
   library.onchange = () => {
     searchRequest++;
     findButton.disabled = !library.value;
+    if (deleteDocButton) deleteDocButton.disabled = !library.value;
     results.replaceChildren();
   };
+
+  if (deleteDocButton) {
+    deleteDocButton.onclick = async () => {
+      const id = library.value;
+      if (!id) return;
+      const text = library.options[library.selectedIndex]?.text || id;
+      if (!confirm(`Bạn có chắc muốn xóa tài liệu "${text}" khỏi kho không?`)) return;
+      try {
+        deleteDocButton.disabled = true;
+        await requestApi("documents", {operation: "delete", id});
+        note.textContent = `Đã xóa tài liệu: ${text}`;
+        results.replaceChildren();
+        await refresh();
+      } catch (error) {
+        note.textContent = error.message;
+        deleteDocButton.disabled = false;
+      }
+    };
+  }
 
   byId("doc-search").onsubmit = async event => {
     event.preventDefault();

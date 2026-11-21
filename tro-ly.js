@@ -58,6 +58,10 @@
     for (const id of [...fields, "line", "save", "new", "duplicate", "library", "version", "import", "sheet"]) {
       el(id).disabled = !edit;
     }
+    if (el("delete")) el("delete").disabled = !edit || !state.id;
+    if (el("delete-segment")) el("delete-segment").disabled = !edit || plan.lines.length <= 1;
+    if (el("preview-audio")) el("preview-audio").disabled = !plan.lines[index()];
+    if (el("clear-audio")) el("clear-audio").disabled = !edit || !state.id;
     el("restore").disabled = !edit || !el("version").value;
     el("generate").hidden = story;
     el("generate").disabled = !edit;
@@ -102,6 +106,7 @@
   function move(slot) {
     minute.selectedIndex = Math.min(slot, plan.lines.length - 1);
     line.value = plan.lines[index()] || "";
+    if (el("preview-box")) el("preview-box").hidden = true;
     paint();
   }
 
@@ -250,6 +255,66 @@
     if (el("library").value) void run("open", {id: el("library").value});
   };
   el("restore").onclick = () => void run("restore", {version: el("version").value});
+
+  if (el("delete")) {
+    el("delete").onclick = async () => {
+      if (!state.id) return;
+      const title = plan.topic || state.id;
+      if (!confirm(`Bạn có chắc muốn xóa kịch bản "${title}" không? Toàn bộ các đoạn và file âm thanh của kịch bản này sẽ bị xóa.`)) return;
+      await run("delete", {id: state.id});
+    };
+  }
+
+  if (el("delete-segment")) {
+    el("delete-segment").onclick = async () => {
+      const slot = index();
+      if (slot < 0 || slot >= plan.lines.length) return;
+      const snippet = (plan.lines[slot] || "").slice(0, 35);
+      if (!confirm(`Bạn có chắc muốn xóa đoạn ${slot + 1} ("${snippet}...")?`)) return;
+      await run("delete-segment", {slot});
+    };
+  }
+
+  if (el("clear-audio")) {
+    el("clear-audio").onclick = async () => {
+      if (!state.id) return;
+      if (!confirm("Bạn có chắc muốn xóa toàn bộ file âm thanh đã tạo trước đó của kịch bản này để tạo lại từ đầu?")) return;
+      await run("clear-audio");
+    };
+  }
+
+  if (el("preview-audio")) {
+    el("preview-audio").onclick = async () => {
+      const slot = index();
+      const btn = el("preview-audio");
+      const player = el("preview-audio-player");
+      const box = el("preview-box");
+      const info = el("preview-info");
+      if (!box || !player) return;
+      try {
+        btn.disabled = true;
+        btn.textContent = "Đang tạo/tải tiếng…";
+        const result = await requestApi("assistant", {operation: "preview", slot});
+        if (result && result.audio) {
+          player.src = result.audio;
+          box.hidden = false;
+          info.textContent = `Đoạn ${slot + 1} (${result.provider || "âm thanh"}) · ${result.text || ""}`;
+          try {
+            await player.play();
+          } catch (e) {
+            // Browsers may block auto-play until interaction
+          }
+        } else {
+          notify("Không tạo được âm thanh cho đoạn này.");
+        }
+      } catch (err) {
+        notify("Lỗi nghe thử: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Nghe thử đoạn này 🔊";
+      }
+    };
+  }
 
   async function refresh() {
     if (!pane.hidden && !document.hidden && !sending && !polling) {

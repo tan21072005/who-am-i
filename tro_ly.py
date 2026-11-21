@@ -1,9 +1,12 @@
 """Editable, channel-local rundown and its monotonic playback clock."""
+import base64
 from copy import copy
 from hashlib import sha256
 import json
+from pathlib import Path
 import re
 import secrets
+import shutil
 import time
 
 from cai_dat_kenh import write_atomic
@@ -169,6 +172,86 @@ class Rundown:
         self.idle_armed = True
         self.draft_note = ""
         self.audio_note = ""
+
+    def delete_script(self, script_id):
+        script_id = self.checked_id(script_id)
+        folder = self.library / script_id
+        if not folder.is_dir():
+            raise InteractionError("Không tìm thấy kịch bản cần xóa.")
+        shutil.rmtree(folder, ignore_errors=True)
+        order_file = self.library / "order.json"
+        if order_file.is_file():
+            try:
+                order = read_json(order_file)
+                if script_id in order:
+                    order.remove(script_id)
+                    write_json(order_file, order)
+            except Exception:
+                pass
+        if self.script_id == script_id:
+            self.open_blank()
+        return True
+
+    def delete_segment(self, slot):
+        if type(slot) is not int or not 0 <= slot < len(self.plan["lines"]):
+            raise InteractionError("Vị trí đoạn không hợp lệ.")
+        if len(self.plan["lines"]) <= 1:
+            raise InteractionError("Kịch bản cần có ít nhất một đoạn.")
+        self.plan["lines"].pop(slot)
+        if self.plan.get("flow") == "timed":
+            self.plan["lines"].append("")
+        new_chapters = []
+        for ch in self.plan.get("chapters", []):
+            ch_slot = ch["slot"]
+            if ch_slot == slot:
+                continue
+            elif ch_slot > slot:
+                new_chapters.append({"slot": ch_slot - 1, "title": ch["title"]})
+            else:
+                new_chapters.append(ch)
+        self.plan["chapters"] = new_chapters
+        if "joins" in self.plan:
+            self.plan["joins"] = [j - 1 if j > slot else j for j in self.plan["joins"] if j != slot]
+        if "episodes" in self.plan:
+            self.plan["episodes"] = [e - 1 if e > slot else e for e in self.plan["episodes"] if e != slot]
+            if not self.plan["episodes"] or self.plan["episodes"][0] != 0:
+                self.plan["episodes"].insert(0, 0)
+        self.cursor = min(self.cursor, len(self.plan["lines"]) - 1)
+        self.revision += 1
+        self.save(self.plan)
+        return True
+
+    def clear_audio(self):
+        folder = self.record_path().parent if self.script_id else self.directory
+        audio_dir = folder / "tro-ly-audio"
+        if audio_dir.is_dir():
+            shutil.rmtree(audio_dir, ignore_errors=True)
+        self.audio_index = {}
+        self.audio_index_key = None
+        return True
+
+    def preview_audio(self, slot, speaker):
+        if type(slot) is not int or not 0 <= slot < len(self.plan["lines"]):
+            raise InteractionError("Vị trí đoạn không hợp lệ.")
+        line = self.plan["lines"][slot]
+        if not line or not line.strip():
+            raise InteractionError("Đoạn này chưa có nội dung.")
+        tag_match = re.match(r"^\[[A-Za-z0-9_\sÀ-ỹ]+\]\s*(.*)", line.strip(), flags=re.DOTALL)
+        text_to_speak = tag_match.group(1).strip() if tag_match else line.strip()
+        speech = self.cached(slot, text_to_speak, speaker)
+        if speech is None:
+            import asyncio
+            speech = asyncio.run(speaker.synthesize(text_to_speak))
+            self.cache(slot, text_to_speak, speaker, speech)
+        mime = "audio/mpeg" if speech.extension == "mp3" else "audio/wav"
+        data_uri = "data:" + mime + ";base64," + base64.b64encode(speech.audio).decode("ascii")
+        return {
+            "slot": slot,
+            "provider": speech.provider,
+            "extension": speech.extension,
+            "audio": data_uri,
+            "text": text_to_speak
+        }
 
     def playback_copy(self, token):
         playback = copy(self)

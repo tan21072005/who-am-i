@@ -97,7 +97,7 @@
       <section class="panel stack" aria-labelledby="show-library-heading">
         <h2 id="show-library-heading">Kịch bản đã lưu</h2>
         <label>Chọn kịch bản<select id="show-library"></select></label>
-        <div class="row"><button class="primary" id="show-start">Phát bản đã lưu</button><button id="show-new">Kịch bản mới</button></div>
+        <div class="row"><button class="primary" id="show-start">Phát bản đã lưu</button><button id="show-new">Kịch bản mới</button><button type="button" class="stop" id="show-delete">Xóa kịch bản</button></div>
         <details>
           <summary>Bản sao và lịch sử</summary>
           <div class="stack details-body">
@@ -119,7 +119,7 @@
           <label>Tài liệu đã nhập<select id="doc-library"></select></label>
           <form id="doc-search" class="stack">
             <label>Tìm trong tài liệu<input id="doc-query" maxlength="240" placeholder="Tên nhân vật hoặc cụm từ, bỏ trống để xem đầu tài liệu"></label>
-            <button id="doc-find">Tìm đoạn</button>
+            <div class="row"><button id="doc-find" type="submit">Tìm đoạn</button><button type="button" class="stop" id="doc-delete">Xóa tài liệu khỏi kho</button></div>
           </form>
           <p id="doc-note" role="status"></p>
           <div class="stack" id="doc-results"></div>
@@ -146,6 +146,12 @@
         <button class="primary" id="show-save">Lưu kịch bản</button>
         <button id="show-retell">AI kể lại phần đã chọn</button>
         <button id="show-add">Thêm đoạn</button>
+        <button type="button" id="show-delete-segment" class="stop">Xóa đoạn</button>
+        <button type="button" id="show-preview-audio">Nghe thử đoạn này 🔊</button>
+      </div>
+      <div id="show-preview-box" class="stack" hidden>
+        <audio id="show-preview-audio-player" controls style="width: 100%; margin-top: 6px;"></audio>
+        <small id="show-preview-info" class="subtle"></small>
       </div>
       <p id="show-message" role="status"></p>
       <p id="show-note" class="subtle" role="status"></p>
@@ -154,7 +160,7 @@
         <div class="stack details-body">
           <div class="row"><button id="show-prev">Đoạn trước</button><button id="show-next">Đoạn sau</button><button id="show-from">Phát từ đoạn chọn trong bản lưu</button></div>
           <label id="show-join-label" class="check" hidden><input id="show-join" type="checkbox"> Kể liền với đoạn trước, chưa chen chat</label>
-          <div class="row"><button id="show-prepare">Tạo tiếng trước</button><button id="show-prepare-chapter">Tạo tiếng phần đã chọn</button></div>
+          <div class="row"><button id="show-prepare">Tạo tiếng trước</button><button id="show-prepare-chapter">Tạo tiếng phần đã chọn</button><button type="button" id="show-clear-audio" class="stop">Xóa âm thanh đã tạo</button></div>
           <small id="show-section-help">AI kể lại từ đoạn đang chọn, tối đa 30 đoạn hoặc đến hết chương.</small>
           <div id="show-story-controls" class="stack" hidden>
             <label>Số lượt chen tối đa giữa hai đoạn<input id="show-chat_limit" type="number" min="0" max="5" step="1" value="1"></label>
@@ -233,6 +239,13 @@
                   <option value="short">Ngắn · tối đa 180 ký tự</option>
                   <option value="normal">Vừa · tối đa 320 ký tự</option>
                   <option value="long">Dài · tối đa 480 ký tự</option>
+                </select>
+              </label>
+              <label>Ngôn ngữ trả lời của Bông
+                <select form="interaction-settings" id="live-reply_language">
+                  <option value="auto">Tự động · Nhận diện tiếng Việt / Tiếng Anh theo bình luận</option>
+                  <option value="vi">Luôn trả lời Tiếng Việt</option>
+                  <option value="en">Luôn trả lời Tiếng Anh (English)</option>
                 </select>
               </label>
               <label class="inline"><input form="interaction-settings" id="live-idle_on" type="checkbox"> Bông tự nói khi phòng yên lặng</label>

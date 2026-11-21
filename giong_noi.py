@@ -6,6 +6,7 @@ from io import BytesIO
 from threading import Lock
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
@@ -52,6 +53,18 @@ def find_espeak():
     return None
 
 
+def is_predominantly_english(text):
+    words = re.findall(r"[A-Za-z]+", text)
+    if len(words) < 2:
+        return False
+    if re.search(r"[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]", text, re.I):
+        return False
+    common_en = {"the", "a", "an", "is", "are", "am", "you", "i", "my", "your", "hello", "hi", "hey",
+                 "how", "what", "why", "thank", "thanks", "and", "or", "to", "in", "on", "it", "with",
+                 "story", "good", "great", "nice", "welcome", "yes", "no", "ok", "okay", "bye", "see"}
+    return sum(1 for w in words if w.lower() in common_en) >= 2 or (len(words) >= 3 and words[0].lower() in ("hello", "hi", "hey", "welcome", "thank", "thanks", "yes", "sure", "of"))
+
+
 class Speaker:
     def __init__(self, voice, engine="auto", rate=4):
         self.rate = rate
@@ -66,13 +79,18 @@ class Speaker:
     def available(self):
         return bool(self.vieneu or self.edge or self.espeak)
 
-    async def edge_audio(self, text):
+    async def edge_audio(self, text, english=False):
         import edge_tts
 
         audio = bytearray()
-        edge_voice = self.voice
-        if edge_voice not in ("vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural"):
-            edge_voice = "vi-VN-HoaiMyNeural" if self.voice in ("Quỳnh Anh", "Mỹ Duyên", "Ngọc Linh", "Kim Thanh", "Trúc Ly") else "vi-VN-NamMinhNeural"
+        if english:
+            edge_voice = "en-US-JennyNeural"
+            provider = "Edge TTS (English)"
+        else:
+            edge_voice = self.voice
+            if edge_voice not in ("vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural"):
+                edge_voice = "vi-VN-HoaiMyNeural" if self.voice in ("Quỳnh Anh", "Mỹ Duyên", "Ngọc Linh", "Kim Thanh", "Trúc Ly") else "vi-VN-NamMinhNeural"
+            provider = "Edge TTS"
         async for chunk in edge_tts.Communicate(text, edge_voice, rate=f"{self.rate:+d}%").stream():
             if chunk.get("type") == "audio":
                 audio.extend(chunk["data"])
@@ -80,7 +98,7 @@ class Speaker:
                     raise SpeechError("Lời thoại quá dài. Hãy rút ngắn câu.")
         if not audio:
             raise SpeechError("Edge TTS chưa trả về âm thanh.")
-        return Speech(bytes(audio), "mp3", "Edge TTS")
+        return Speech(bytes(audio), "mp3", provider)
 
     def espeak_audio(self, text):
         with TemporaryDirectory(prefix="bong-hoa-tts-") as directory:
@@ -135,6 +153,11 @@ class Speaker:
     async def synthesize(self, text, *, retry=None):
         loop = asyncio.get_running_loop()
         edge_error = None
+        if is_predominantly_english(text) and self.edge:
+            try:
+                return await asyncio.wait_for(self.edge_audio(text, english=True), timeout=9)
+            except Exception:
+                pass
         if self.engine == "vieneu":
             try:
                 return await asyncio.to_thread(self.vieneu_audio, text)

@@ -293,3 +293,16 @@ class DocumentStore:
             if found is None:
                 raise InteractionError("Không tìm thấy đoạn đã chọn.")
             return found
+
+    def delete(self, doc_id):
+        if not isinstance(doc_id, str) or not re.fullmatch(r"[a-f0-9]{16}", doc_id):
+            raise InteractionError("Mã tài liệu không hợp lệ.")
+        with self.connect() as db:
+            db.execute("DELETE FROM passages WHERE document=?", (doc_id,))
+            db.execute("DELETE FROM documents WHERE id=?", (doc_id,))
+        for file in self.root.glob(f"{doc_id}.*"):
+            try:
+                file.unlink()
+            except OSError:
+                pass
+        return True

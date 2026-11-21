@@ -37,7 +37,7 @@ DEFAULTS = {
     "share_text": "Bông cảm ơn {name} đã chia sẻ buổi live!",
     "like_on": False, "like_action": "LOVE", "like_cooldown": 30,
     "like_text": "Bông cảm ơn {name} đã thả tim!",
-    "reply_length": "normal", "idle_on": False, "idle_seconds": 45, "idle_script": "",
+    "reply_length": "normal", "reply_language": "auto", "idle_on": False, "idle_seconds": 45, "idle_script": "",
 }
 
 
@@ -111,6 +111,10 @@ class Interaction:
         if not isinstance(length, str) or length not in REPLY_LENGTHS:
             raise InteractionError("Chọn độ dài câu trả lời có sẵn.")
         result["reply_length"] = length
+        reply_lang = values.get("reply_language", "auto")
+        if reply_lang not in ("auto", "vi", "en"):
+            raise InteractionError("Ngôn ngữ trả lời phải là auto, vi hoặc en.")
+        result["reply_language"] = reply_lang
         script = values.get("idle_script")
         if not isinstance(script, str) or len(script) > 2000:
             raise InteractionError("Lời tự trò chuyện tối đa 2.000 ký tự.")
