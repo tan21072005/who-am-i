@@ -205,7 +205,7 @@
             </div>
             <div class="nv-slider-row">
               <span class="nv-slider-label">Vị trí X:</span>
-              <input id="nv4PosSlider" class="nv-slider" type="range" min="8" max="92" value="38" />
+              <input id="nv4PosSlider" class="nv-slider" type="range" min="2" max="98" value="38" />
               <span id="nv4PosVal" class="nv-slider-val">38%</span>
             </div>
 
@@ -388,7 +388,7 @@
       document.getElementById('nv4ScaleVal').textContent = `${scaleSlider.value}%`;
     }
     if (posSlider) {
-      posSlider.value = String(Math.max(8, Math.min(92, posPct)));
+      posSlider.value = String(Math.max(2, Math.min(98, posPct)));
       document.getElementById('nv4PosVal').textContent = `${posSlider.value}%`;
     }
   }

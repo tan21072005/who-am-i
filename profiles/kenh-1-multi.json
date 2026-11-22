@@ -41,7 +41,7 @@
         "@bong"
       ],
       "role": "Người dẫn chuyện chính, giữ nhịp phòng live và kết nối mọi người",
-      "enabled": true,
+      "enabled": false,
       "renderer": {
         "type": "canvas_flower",
         "palette": "dao",
@@ -155,9 +155,9 @@
       },
       "stage": {
         "slot_index": 1,
-        "x_ratio": 0.38,
+        "x_ratio": 0.31,
         "y_ratio": 0.8,
-        "scale": 0.95,
+        "scale": 0.98,
         "flip_x": false,
         "bubble_color": "#E0F7F4"
       },
@@ -246,7 +246,7 @@
         "slot_index": 2,
         "x_ratio": 0.62,
         "y_ratio": 0.84,
-        "scale": 1.0,
+        "scale": 1.02,
         "flip_x": false,
         "bubble_color": "#FFE8C2"
       },
@@ -302,7 +302,7 @@
       "enabled": true,
       "renderer": {
         "type": "sprite",
-        "active_skin": "hat",
+        "active_skin": "default",
         "skins": {
           "default": {
             "label": "Thỏ Ôm Cà Rốt",
@@ -331,9 +331,9 @@
       },
       "stage": {
         "slot_index": 3,
-        "x_ratio": 0.86,
+        "x_ratio": 0.9,
         "y_ratio": 0.82,
-        "scale": 0.94,
+        "scale": 0.98,
         "flip_x": false,
         "bubble_color": "#FFF0D6"
       },

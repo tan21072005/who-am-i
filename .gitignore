@@ -36,6 +36,8 @@ Desktop.ini
 
 # Multi-character cache & 3D raw animation clips
 sound-data/multi-cache/
+assets/models/_backup/
+scratch_*/
 assets/models/*/*.glb
 !assets/models/*/*_optimized.glb
 

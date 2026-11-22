@@ -20,6 +20,7 @@
       position: absolute; left: 14%; bottom: 4%; transform: translateX(-50%);
       width: 22vw; max-width: 320px; height: auto; pointer-events: none;
       transition: transform 0.25s ease, filter 0.25s ease;
+      z-index: 10;
     }
     #flower.speaking {
       transform: translateX(-50%) scale(1.08) translateY(-6px);
@@ -36,14 +37,18 @@
     #bubble-manga.visible { opacity: 1; }
     #bubble-speaker { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #3f3352; margin-bottom: 3px; }
     #bubble-text { font-size: clamp(14px, 1.9vw, 22px); font-weight: 800; line-height: 1.35; }
+
     .name-plates { position: absolute; inset: 0; pointer-events: none; z-index: 20; display: none; }
-    body.is-preview .name-plates { display: block; }
+    body.is-preview .name-plates,
+    body.has-plates .name-plates { display: block; }
     .name-plate {
-      position: absolute; bottom: 10px; transform: translateX(-50%);
+      position: absolute; top: 0; left: 0; transform: translate(-50%, 0);
       padding: 4px 12px; border-radius: 999px;
-      background: rgba(30, 24, 40, 0.88); border: 1px solid rgba(255, 196, 140, 0.35);
+      background: rgba(30, 24, 40, 0.92); border: 1px solid rgba(255, 196, 140, 0.45);
       color: #f7f2fb; font-size: 11px; font-weight: 700; white-space: nowrap;
-      transition: left 0.15s ease;
+      pointer-events: none; will-change: transform, left, top;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
     .name-plate.active { background: #ffc48c; border-color: #ffc48c; color: #1a1224; }
   </style>
@@ -61,10 +66,10 @@
     <canvas id="three-canvas"></canvas>
     <canvas id="flower" width="480" height="530"></canvas>
     <div class="name-plates">
-      <div id="plate-bong" class="name-plate" style="left:14%;">🌸 Bông Đào</div>
-      <div id="plate-rong" class="name-plate" style="left:38%;">🐉 Bé Rồng Ngọc</div>
-      <div id="plate-ho" class="name-plate" style="left:62%;">🐯 Hổ Mập</div>
-      <div id="plate-tho" class="name-plate" style="left:86%;">🐰 Thỏ Cà Rốt</div>
+      <div id="plate-bong" class="name-plate">🌸 Bông Đào</div>
+      <div id="plate-rong" class="name-plate">🐉 Bé Rồng Ngọc</div>
+      <div id="plate-ho" class="name-plate">🐯 Hổ Mập</div>
+      <div id="plate-tho" class="name-plate">🐰 Thỏ Cà Rốt</div>
     </div>
     <div id="bubble-manga">
       <div id="bubble-speaker">Bông Đào</div>
@@ -103,27 +108,28 @@
     const MODELS_CFG = {
       rong: {
         url: '/assets/models/rong/rong_optimized.glb', xRatio: 0.38, rotationY: 0,
-        skinTints: { default: 0xffffff, tet: 0xffe0d0 },
+        skinTints: { default: 0xffffff, tet: 0xfff0ea },
         clips: {
           IDLE: 'Idle', TALK: 'Idle', WAVE: 'Big_Wave_Hello',
           HAPPY: 'Happy_jump_f', LAUGH: 'Happy_jump_f', LOVE: 'Happy_jump_f',
           ANGRY: 'Angry_Stomp', ROAR: 'Angry_Stomp', ICE_BREATH: 'Angry_Stomp',
           SCARED: 'Head_Hold_in_Pain', SHOCK: 'Head_Hold_in_Pain', SAD: 'Head_Hold_in_Pain',
-          FLY: 'Happy_jump_f'
+          FLY: 'FLY'
         }
       },
       ho: {
         url: '/assets/models/ho/ho_optimized.glb', xRatio: 0.62, rotationY: 0,
-        skinTints: { default: 0xffffff, glasses: 0xe6f2ff },
+        skinTints: { default: 0xffffff, glasses: 0xffffff },
         clips: {
           IDLE: 'Idle', TALK: 'Talk_Passionately', WAVE: 'Big_Wave_Hello',
-          HAPPY: 'Victory_Cheer', LAUGH: 'Victory_Cheer', LOVE: 'Victory_Cheer',
-          ANGRY: 'Angry_Ground_Stomp', SHOCK: 'Angry_Ground_Stomp', THINK: 'Talk_Passionately'
+          HAPPY: 'Victory_Cheer', LAUGH: 'Victory_Cheer', LOVE: 'Motivational_Cheer',
+          ANGRY: 'Angry_Ground_Stomp', ROAR: 'Angry_Ground_Stomp', SHOCK: 'Angry_Ground_Stomp',
+          THINK: 'Talk_Passionately'
         }
       },
       tho: {
         url: '/assets/models/tho/tho_optimized.glb', xRatio: 0.86, rotationY: 0,
-        skinTints: { default: 0xffffff, hat: 0xfff0f6 },
+        skinTints: { default: 0xffffff, hat: 0xfff5f8 },
         clips: {
           IDLE: 'Idle', TALK: 'Talk_with_Hands_Open', WAVE: 'Big_Wave_Hello',
           HAPPY: 'Motivational_Cheer', LAUGH: 'Motivational_Cheer', LOVE: 'Motivational_Cheer',
@@ -134,7 +140,6 @@
 
     const TARGET_HEIGHT = 1.85;
     const FLOOR_Y = -0.95;
-    const CARROT_URL = '/assets/models/props/carrot_optimized.glb';
     const BUBBLE_COLORS = { bong: '#FFE4E1', rong: '#E0F7F4', ho: '#FFE8C2', tho: '#FFF0D6' };
 
     const canvas = document.getElementById('three-canvas');
@@ -152,7 +157,8 @@
     scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
     const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 50);
-    camera.position.set(0, 0.2, 6.2);
+    const CAMERA_BASE_POS = new THREE.Vector3(0, 0.2, 6.2);
+    camera.position.copy(CAMERA_BASE_POS);
 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444466, 0.9);
     hemiLight.position.set(0, 20, 0);
@@ -165,18 +171,219 @@
     rimLight.position.set(-3, 2, -3);
     scene.add(rimLight);
 
+    // Tính toán chuẩn xác Frustum 3D ở khoảng cách camera
+    function getWorldFrustum() {
+      const vFOV = THREE.MathUtils.degToRad(camera.fov);
+      const height = 2 * Math.tan(vFOV / 2) * camera.position.z;
+      const width = height * camera.aspect;
+      return { width, height };
+    }
+
+    function xRatioToWorldX(ratio) {
+      const { width } = getWorldFrustum();
+      return (ratio - 0.5) * width;
+    }
+
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      updateLayout();
     });
 
-    const xRatioToWorldX = (ratio) => (ratio - 0.5) * 6.0;
     const loader = new GLTFLoader();
     const actors = {};
     let freeDragEnabled = false;
     let charEnabledMap = { bong: true, rong: true, ho: true, tho: true };
     let charXRatioMap = { bong: 0.14, rong: 0.38, ho: 0.62, tho: 0.86 };
+
+    // ==========================================
+    // TẠO PHỤ KIỆN PROCEDURAL (Kính / Mũ / Vương miện)
+    // ==========================================
+    function createSunglasses() {
+      const g = new THREE.Group();
+      g.name = 'Accessory_Sunglasses';
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.88 });
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.25, metalness: 0.85 });
+      
+      const lensGeom = new THREE.CylinderGeometry(0.10, 0.10, 0.02, 20);
+      lensGeom.rotateX(Math.PI / 2);
+      const lLens = new THREE.Mesh(lensGeom, glassMat);
+      lLens.position.set(-0.16, 0, 0);
+      const rLens = new THREE.Mesh(lensGeom, glassMat);
+      rLens.position.set(0.16, 0, 0);
+      
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.025, 0.025), frameMat);
+      bridge.position.set(0, 0.02, 0);
+      
+      g.add(lLens); g.add(rLens); g.add(bridge);
+      return g;
+    }
+
+    function createBeretHat() {
+      const g = new THREE.Group();
+      g.name = 'Accessory_Hat';
+      const mat = new THREE.MeshStandardMaterial({ color: 0xff6b8b, roughness: 0.75, metalness: 0.1 });
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.5), mat);
+      dome.scale.set(1.15, 0.45, 1.15);
+      dome.rotation.z = 0.18;
+      
+      const pom = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0xfff0c2, roughness: 0.6 }));
+      pom.position.set(0, 0.12, 0);
+      
+      g.add(dome); g.add(pom);
+      return g;
+    }
+
+    function createCrown() {
+      const g = new THREE.Group();
+      g.name = 'Accessory_Crown';
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.25, metalness: 0.9 });
+      const rubyMat = new THREE.MeshStandardMaterial({ color: 0xff1744, roughness: 0.1, metalness: 0.3 });
+      
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.16, 0.06, 20, 1, true), goldMat);
+      g.add(ring);
+      
+      for (let i = 0; i < 5; i++) {
+        const ang = (i / 5) * Math.PI * 2;
+        const h = (i === 0 || i === 2) ? 0.12 : 0.08;
+        const sp = new THREE.Mesh(new THREE.ConeGeometry(0.04, h, 8), goldMat);
+        sp.position.set(Math.cos(ang) * 0.15, 0.03 + h / 2, Math.sin(ang) * 0.15);
+        g.add(sp);
+        if (i === 0) {
+          const gem = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), rubyMat);
+          gem.position.set(Math.cos(ang) * 0.16, 0.05, Math.sin(ang) * 0.16);
+          g.add(gem);
+        }
+      }
+      return g;
+    }
+
+    // ==========================================
+    // HỆ THỐNG HIỆU ỨNG VFX (Phun băng, Bắn tim, Chấn động, Mây bay)
+    // ==========================================
+    class FXManager {
+      constructor(scene) {
+        this.scene = scene;
+        this.particles = [];
+        this.rings = [];
+        this.cameraShakeTime = 0;
+
+        const heartCanvas = document.createElement('canvas');
+        heartCanvas.width = 64; heartCanvas.height = 64;
+        const ctx = heartCanvas.getContext('2d');
+        ctx.font = '48px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('💖', 32, 34);
+        this.heartTexture = new THREE.CanvasTexture(heartCanvas);
+
+        // Mây bay dưới chân Rồng
+        this.cloudGroup = new THREE.Group();
+        this.cloudGroup.visible = false;
+        const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.05, transparent: true, opacity: 0.8 });
+        for (let i = 0; i < 6; i++) {
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.20 + Math.random() * 0.12, 12, 10), cloudMat);
+          puff.position.set((Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.08, (Math.random() - 0.5) * 0.4);
+          this.cloudGroup.add(puff);
+        }
+        this.scene.add(this.cloudGroup);
+      }
+
+      triggerHearts(x, y, z) {
+        for (let i = 0; i < 12; i++) {
+          const mat = new THREE.SpriteMaterial({ map: this.heartTexture, transparent: true, opacity: 1 });
+          const sp = new THREE.Sprite(mat);
+          sp.scale.set(0.36, 0.36, 0.36);
+          sp.position.set(x + (Math.random() - 0.5) * 0.5, y + 0.5 + Math.random() * 0.4, z + (Math.random() - 0.5) * 0.2);
+          this.scene.add(sp);
+          this.particles.push({ obj: sp, vx: (Math.random() - 0.5) * 0.35, vy: 0.8 + Math.random() * 0.5, life: 1.0, maxLife: 1.6 });
+        }
+      }
+
+      triggerIceBreath(x, y, z) {
+        const colors = [0x00e5ff, 0x80d8ff, 0xffffff, 0xb2ebf2];
+        for (let i = 0; i < 35; i++) {
+          const mat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)], transparent: true, opacity: 0.9 });
+          const m = new THREE.Mesh(new THREE.SphereGeometry(0.04 + Math.random() * 0.04, 8, 6), mat);
+          m.position.set(x, y, z);
+          this.scene.add(m);
+          this.particles.push({
+            obj: m,
+            vx: (Math.random() - 0.45) * 1.5,
+            vy: (Math.random() - 0.5) * 0.6,
+            vz: 1.6 + Math.random() * 1.8,
+            life: 1.0, maxLife: 1.3
+          });
+        }
+      }
+
+      triggerShockwave(x, z) {
+        const ringGeom = new THREE.RingGeometry(0.18, 0.32, 32);
+        ringGeom.rotateX(-Math.PI / 2);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.position.set(x, FLOOR_Y + 0.02, z);
+        this.scene.add(ring);
+        this.rings.push({ obj: ring, life: 1.0, maxLife: 0.75 });
+        this.cameraShakeTime = 0.32;
+      }
+
+      update(delta, elapsed, camera) {
+        if (this.cameraShakeTime > 0) {
+          this.cameraShakeTime -= delta;
+          const amt = (this.cameraShakeTime / 0.32) * 0.045;
+          camera.position.x = CAMERA_BASE_POS.x + (Math.random() - 0.5) * amt;
+          camera.position.y = CAMERA_BASE_POS.y + (Math.random() - 0.5) * amt;
+        } else {
+          camera.position.x = CAMERA_BASE_POS.x;
+          camera.position.y = CAMERA_BASE_POS.y;
+        }
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.life -= delta / p.maxLife;
+          if (p.life <= 0) {
+            this.scene.remove(p.obj);
+            if (p.obj.geometry) p.obj.geometry.dispose();
+            if (p.obj.material) p.obj.material.dispose();
+            this.particles.splice(i, 1);
+            continue;
+          }
+          p.obj.position.x += (p.vx || 0) * delta;
+          p.obj.position.y += (p.vy || 0) * delta;
+          if (p.vz) p.obj.position.z += p.vz * delta;
+          if (p.obj.material) p.obj.material.opacity = Math.max(0, p.life);
+        }
+
+        for (let i = this.rings.length - 1; i >= 0; i--) {
+          const r = this.rings[i];
+          r.life -= delta / r.maxLife;
+          if (r.life <= 0) {
+            this.scene.remove(r.obj);
+            if (r.obj.geometry) r.obj.geometry.dispose();
+            if (r.obj.material) r.obj.material.dispose();
+            this.rings.splice(i, 1);
+            continue;
+          }
+          const s = 1.0 + (1.0 - r.life) * 7.0;
+          r.obj.scale.set(s, s, s);
+          r.obj.material.opacity = Math.max(0, r.life * 0.9);
+        }
+
+        const rongActor = actors.rong;
+        if (rongActor && rongActor.root.visible && rongActor.emotion === 'FLY') {
+          this.cloudGroup.visible = true;
+          this.cloudGroup.position.set(rongActor.root.position.x, rongActor.root.position.y - 0.28, rongActor.root.position.z);
+          this.cloudGroup.rotation.y = elapsed * 0.55;
+          const s = 1.0 + Math.sin(elapsed * 4.2) * 0.08;
+          this.cloudGroup.scale.set(s, s * 0.6, s);
+        } else {
+          this.cloudGroup.visible = false;
+        }
+      }
+    }
+
+    const fxManager = new FXManager(scene);
 
     function tuneMaterials(object) {
       object.traverse((obj) => {
@@ -197,13 +404,15 @@
       });
     }
 
-    function applySkinTint(id, skinId) {
+    function applySkin(id, skinId) {
       const actor = actors[id];
       const cfg = MODELS_CFG[id];
       if (!actor || !cfg) return;
+
+      // 1. Tints cho body
       const hex = (cfg.skinTints && cfg.skinTints[skinId]) || 0xffffff;
       actor.root.traverse((obj) => {
-        if (obj.isMesh) {
+        if (obj.isMesh && obj.name !== 'Prop_Carrot' && !obj.name.startsWith('Accessory_')) {
           const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
           for (const mat of mats) {
             if (mat && mat.color) {
@@ -213,6 +422,20 @@
           }
         }
       });
+
+      // 2. Toggles phụ kiện
+      if (id === 'ho') {
+        const glasses = actor.root.getObjectByName('Accessory_Sunglasses');
+        if (glasses) glasses.visible = (skinId === 'glasses');
+      } else if (id === 'tho') {
+        const hat = actor.root.getObjectByName('Accessory_Hat');
+        if (hat) hat.visible = (skinId === 'hat');
+        const carrot = actor.root.getObjectByName('Prop_Carrot');
+        if (carrot) carrot.visible = true;
+      } else if (id === 'rong') {
+        const crown = actor.root.getObjectByName('Accessory_Crown');
+        if (crown) crown.visible = (skinId === 'tet');
+      }
     }
 
     function updateLayout() {
@@ -221,22 +444,11 @@
       flowerEl.style.display = showBong ? 'block' : 'none';
       flowerEl.style.left = `${Math.round((charXRatioMap.bong ?? 0.14) * 100)}%`;
 
-      const plateBong = document.getElementById('plate-bong');
-      if (plateBong) {
-        plateBong.style.display = showBong ? 'block' : 'none';
-        plateBong.style.left = `${Math.round((charXRatioMap.bong ?? 0.14) * 100)}%`;
-      }
-
       for (const [id, actor] of Object.entries(actors)) {
         const show = Boolean(charEnabledMap[id]);
         actor.root.visible = show;
         const ratio = charXRatioMap[id] ?? MODELS_CFG[id].xRatio;
         actor.targetX = xRatioToWorldX(ratio);
-        const plate = document.getElementById('plate-' + id);
-        if (plate) {
-          plate.style.display = show ? 'block' : 'none';
-          plate.style.left = `${Math.round(ratio * 100)}%`;
-        }
       }
     }
 
@@ -262,7 +474,7 @@
           // 1. Áp dụng PBR shader materials & sRGB colorSpace
           tuneMaterials(root);
 
-          // 2. Căn rotation: nhìn thẳng mặt về phía camera (rotation.x=0, z=0, y từ config hoặc 0)
+          // 2. Mặc định đứng chính diện (không xoay vòng turntable)
           const rotY = cfg.rotationY ?? 0;
           root.rotation.set(0, rotY, 0);
 
@@ -286,6 +498,28 @@
 
           const worldX = xRatioToWorldX(cfg.xRatio);
           root.position.set(worldX, targetY, 0);
+
+          // 5. Gắn phụ kiện 3D cho các skin nếu chưa có sẵn trong model
+          const headBone = root.getObjectByName('Head');
+          if (headBone) {
+            if (id === 'ho' && !root.getObjectByName('Accessory_Sunglasses')) {
+              const glasses = createSunglasses();
+              glasses.position.set(0, 0.22, 0.35);
+              glasses.visible = false;
+              headBone.add(glasses);
+            } else if (id === 'tho' && !root.getObjectByName('Accessory_Hat')) {
+              const hat = createBeretHat();
+              hat.position.set(0, 0.28, 0);
+              hat.visible = false;
+              headBone.add(hat);
+            } else if (id === 'rong' && !root.getObjectByName('Accessory_Crown')) {
+              const crown = createCrown();
+              crown.position.set(0, 0.38, 0.05);
+              crown.visible = false;
+              headBone.add(crown);
+            }
+          }
+
           scene.add(root);
 
           const mixer = new THREE.AnimationMixer(root);
@@ -301,21 +535,6 @@
             isSpeaking: false, emotion: 'IDLE', activeSkin: 'default'
           };
           playClip(id, 'IDLE');
-
-          if (id === 'tho') {
-            const rightHand = root.getObjectByName('RightHand');
-            if (rightHand) {
-              try {
-                const carrotGltf = await loader.loadAsync(CARROT_URL);
-                const carrot = carrotGltf.scene;
-                tuneMaterials(carrot);
-                carrot.scale.setScalar(0.45);
-                carrot.position.set(0.06, 0.08, 0.04);
-                carrot.rotation.set(0.2, 0, -0.35);
-                rightHand.add(carrot);
-              } catch (_e) {}
-            }
-          }
         } catch (err) {
           console.warn(`Chưa tải được model ${id}:`, err);
         }
@@ -323,28 +542,59 @@
       updateLayout();
     }
 
-    // Kéo-thả vị trí trực tiếp
+    // ==========================================
+    // KÉO-THẢ (DRAG & DROP) RA TẬN RÌA MÀN HÌNH THEO CAMERA FRUSTUM
+    // ==========================================
     let draggingId = null;
+
+    function getPointerPlanePos(clientX, clientY) {
+      const ndcX = (clientX / window.innerWidth) * 2 - 1;
+      const ndcY = -(clientY / window.innerHeight) * 2 + 1;
+      const vec = new THREE.Vector3(ndcX, ndcY, 0.5);
+      vec.unproject(camera);
+      const dir = vec.sub(camera.position).normalize();
+      const dist = -camera.position.z / dir.z;
+      return camera.position.clone().add(dir.multiplyScalar(dist));
+    }
+
     canvas.addEventListener('pointerdown', (e) => {
       if (!freeDragEnabled) return;
-      const ratio = e.clientX / window.innerWidth;
-      let nearest = null, minDist = 0.14;
+      const pt = getPointerPlanePos(e.clientX, e.clientY);
+      const { width } = getWorldFrustum();
+      const pointerRatio = (pt.x / width) + 0.5;
+
+      let nearest = null, minDist = 0.20;
       ['bong', 'rong', 'ho', 'tho'].forEach((id) => {
         if (!charEnabledMap[id]) return;
-        const d = Math.abs((charXRatioMap[id] ?? 0.5) - ratio);
+        const r = charXRatioMap[id] ?? 0.5;
+        const d = Math.abs(r - pointerRatio);
         if (d < minDist) { minDist = d; nearest = id; }
       });
-      if (nearest) { draggingId = nearest; canvas.style.cursor = 'grabbing'; }
+      if (nearest) {
+        draggingId = nearest;
+        canvas.style.cursor = 'grabbing';
+        try { canvas.setPointerCapture(e.pointerId); } catch (_e) {}
+      }
     });
-    window.addEventListener('pointermove', (e) => {
+
+    canvas.addEventListener('pointermove', (e) => {
       if (!draggingId) return;
-      charXRatioMap[draggingId] = Math.max(0.08, Math.min(0.92, e.clientX / window.innerWidth));
+      const pt = getPointerPlanePos(e.clientX, e.clientY);
+      const { width } = getWorldFrustum();
+      let ratio = (pt.x / width) + 0.5;
+      // Cho phép kéo sát rìa (0.02 đến 0.98)
+      ratio = Math.max(0.02, Math.min(0.98, ratio));
+      charXRatioMap[draggingId] = ratio;
       updateLayout();
     });
-    window.addEventListener('pointerup', async () => {
+
+    const endDrag = async (e) => {
       if (!draggingId) return;
+      if (e && e.pointerId) {
+        try { canvas.releasePointerCapture(e.pointerId); } catch (_e) {}
+      }
       const id = draggingId;
-      const x_ratio = Number(charXRatioMap[id].toFixed(2));
+      const x_ratio = Number((charXRatioMap[id] || 0.5).toFixed(3));
       draggingId = null;
       canvas.style.cursor = freeDragEnabled ? 'grab' : 'default';
       try {
@@ -356,8 +606,14 @@
           window.parent.postMessage({ type: 'charDragged', id, x_ratio }, '*');
         }
       } catch (_e) {}
-    });
+    };
 
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    // ==========================================
+    // ÂM THANH & TRẠNG THÁI NÓI CHUYỆN
+    // ==========================================
     let targetFps = 30;
     let isPlayingTurn = false;
     let lastEventSeq = 0;
@@ -388,9 +644,19 @@
       }
       for (const [id, actor] of Object.entries(actors)) {
         actor.isSpeaking = id === speakerId;
-        if (id === speakerId) playClip(id, emotion || 'TALK');
-        else if (reactions[id]) playClip(id, reactions[id]);
-        else playClip(id, 'IDLE');
+        const currentEm = (id === speakerId) ? (emotion || 'TALK') : (reactions[id] || 'IDLE');
+        playClip(id, currentEm);
+
+        // Kích hoạt hiệu ứng hình ảnh phụ trợ tương ứng
+        if (id === speakerId) {
+          if (currentEm === 'ICE_BREATH') {
+            fxManager.triggerIceBreath(actor.root.position.x, actor.root.position.y + 0.35, actor.root.position.z + 0.3);
+          } else if (currentEm === 'HAPPY' || currentEm === 'LOVE' || currentEm === 'LAUGH') {
+            fxManager.triggerHearts(actor.root.position.x, actor.root.position.y, actor.root.position.z);
+          } else if (currentEm === 'ROAR' || currentEm === 'ANGRY') {
+            fxManager.triggerShockwave(actor.root.position.x, actor.root.position.z);
+          }
+        }
       }
     }
 
@@ -428,7 +694,7 @@
           const skin = c.renderer && c.renderer.active_skin;
           if (skin && actors[c.id].activeSkin !== skin) {
             actors[c.id].activeSkin = skin;
-            applySkinTint(c.id, skin);
+            applySkin(c.id, skin);
           }
         }
       });
@@ -445,7 +711,7 @@
       return st;
     }
 
-    // Kết nối SSE thời gian thực nếu app.py đã bật /api/multi/events (tự fallback về polling nếu chưa)
+    // SSE Event hub
     try {
       const es = new EventSource('/api/multi/events');
       es.addEventListener('state', (e) => {
@@ -497,7 +763,7 @@
           await new Promise((r) => setTimeout(r, Math.max(1800, (ev.text || '').length * 55)));
         }
 
-        if (!isPlayingTurn) return; // Đã bị ngắt bởi Panic Stop
+        if (!isPlayingTurn) return;
         await new Promise((r) => setTimeout(r, ev.pause_ms || 300));
         if (!isPlayingTurn) return;
         setSpeakingState(null, 'IDLE', {});
@@ -526,8 +792,12 @@
 
     setInterval(pollNextTurn, 500);
 
+    // ==========================================
+    // VÒNG LẶP RENDER CHÍNH (ANIMATE)
+    // ==========================================
     const clock = new THREE.Clock();
     let lastRender = 0;
+
     function animate(now) {
       requestAnimationFrame(animate);
       if (now - lastRender < (1000 / targetFps) - 1.5) return;
@@ -535,14 +805,55 @@
 
       const delta = Math.min(clock.getDelta(), 0.1);
       const elapsed = clock.elapsedTime;
+
+      // Update VFX
+      fxManager.update(delta, elapsed, camera);
+
+      // Update 3D Actors
       for (const [id, actor] of Object.entries(actors)) {
         actor.mixer.update(delta);
-        const desiredScale = actor.baseScale * (actor.isSpeaking ? 1.09 : 1.0);
+        const desiredScale = actor.baseScale * (actor.isSpeaking ? 1.08 : 1.0);
         actor.root.scale.lerp(new THREE.Vector3(desiredScale, desiredScale, desiredScale), 0.14);
-        const flyOffset = (id === 'rong' && actor.emotion === 'FLY') ? (0.45 + Math.sin(elapsed * 4.2) * 0.12) : 0;
-        actor.root.position.y += ((actor.baseY + flyOffset) - actor.root.position.y) * 0.12;
-        actor.root.position.x += (actor.targetX - actor.root.position.x) * 0.16;
+
+        // Chuyển động bay lơ lửng của Bé Rồng Ngọc khi FLY
+        const flyOffset = (id === 'rong' && actor.emotion === 'FLY') ? (0.52 + Math.sin(elapsed * 4.2) * 0.12) : 0;
+        actor.root.position.y += ((actor.baseY + flyOffset) - actor.root.position.y) * 0.14;
+        actor.root.position.x += (actor.targetX - actor.root.position.x) * 0.18;
+
+        // KHÓA CHẶT THẺ TÊN (NAMEPLATE) NGAY DƯỚI CHÂN NHÂN VẬT QUA CHIẾU TỌA ĐỘ 3D->2D
+        const plate = document.getElementById('plate-' + id);
+        if (plate) {
+          if (!actor.root.visible) {
+            plate.style.display = 'none';
+          } else {
+            plate.style.display = 'block';
+            const footPos = new THREE.Vector3(actor.root.position.x, FLOOR_Y + flyOffset * 0.6, actor.root.position.z);
+            footPos.project(camera);
+            const screenX = (footPos.x * 0.5 + 0.5) * window.innerWidth;
+            const screenY = (-(footPos.y * 0.5) + 0.5) * window.innerHeight;
+            const safeY = Math.max(16, Math.min(window.innerHeight - 34, screenY + 12));
+            plate.style.left = `${screenX}px`;
+            plate.style.top = `${safeY}px`;
+          }
+        }
       }
+
+      // Khóa thẻ tên cho Bông Đào (2D Flower Canvas)
+      const flowerEl = document.getElementById('flower');
+      const plateBong = document.getElementById('plate-bong');
+      if (flowerEl && plateBong) {
+        if (flowerEl.style.display !== 'none') {
+          plateBong.style.display = 'block';
+          const rect = flowerEl.getBoundingClientRect();
+          const screenX = rect.left + rect.width / 2;
+          const safeY = Math.max(16, Math.min(window.innerHeight - 34, rect.bottom - 4));
+          plateBong.style.left = `${screenX}px`;
+          plateBong.style.top = `${safeY}px`;
+        } else {
+          plateBong.style.display = 'none';
+        }
+      }
+
       renderer.render(scene, camera);
     }
 

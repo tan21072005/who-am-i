@@ -291,7 +291,7 @@ class LiveDirectorBridge:
                         if "voice_name" in payload:
                             char.setdefault("voice", {})["voice_name"] = str(payload["voice_name"])
                         if "x_ratio" in payload:
-                            char.setdefault("stage", {})["x_ratio"] = max(0.05, min(0.95, float(payload["x_ratio"])))
+                            char.setdefault("stage", {})["x_ratio"] = max(0.02, min(0.98, float(payload["x_ratio"])))
                         if "scale" in payload:
                             char.setdefault("stage", {})["scale"] = max(0.55, min(1.4, float(payload["scale"])))
                         self.stage_config["active_preset"] = "custom"
