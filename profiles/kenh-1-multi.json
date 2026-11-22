@@ -155,7 +155,7 @@
       },
       "stage": {
         "slot_index": 1,
-        "x_ratio": 0.31,
+        "x_ratio": 0.106,
         "y_ratio": 0.8,
         "scale": 0.98,
         "flip_x": false,
@@ -244,7 +244,7 @@
       },
       "stage": {
         "slot_index": 2,
-        "x_ratio": 0.62,
+        "x_ratio": 0.5,
         "y_ratio": 0.84,
         "scale": 1.02,
         "flip_x": false,
@@ -331,7 +331,7 @@
       },
       "stage": {
         "slot_index": 3,
-        "x_ratio": 0.9,
+        "x_ratio": 0.78,
         "y_ratio": 0.82,
         "scale": 0.98,
         "flip_x": false,

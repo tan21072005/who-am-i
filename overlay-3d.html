@@ -15,7 +15,11 @@
     body.bg-checker { background: transparent; }
 
     #stage-root { position: relative; width: 100vw; height: 100vh; overflow: hidden; user-select: none; }
-    #three-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #three-canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+      filter: saturate(1.18) contrast(1.08);
+      image-rendering: auto;
+    }
     #flower {
       position: absolute; left: 14%; bottom: 4%; transform: translateX(-50%);
       width: 22vw; max-width: 320px; height: auto; pointer-events: none;
@@ -144,11 +148,11 @@
 
     const canvas = document.getElementById('three-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.02;
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
@@ -160,14 +164,15 @@
     const CAMERA_BASE_POS = new THREE.Vector3(0, 0.2, 6.2);
     camera.position.copy(CAMERA_BASE_POS);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444466, 0.9);
+    // Ánh sáng đa hướng ấm, bóng đổ tương phản sâu, không bị bợt màu
+    const hemiLight = new THREE.HemisphereLight(0xfff5ea, 0x221830, 0.50);
     hemiLight.position.set(0, 20, 0);
     scene.add(hemiLight);
 
-    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.25);
+    const keyLight = new THREE.DirectionalLight(0xfffaed, 1.35);
     keyLight.position.set(2.5, 4.5, 5);
     scene.add(keyLight);
-    const rimLight = new THREE.DirectionalLight(0xffd8b4, 0.65);
+    const rimLight = new THREE.DirectionalLight(0x70d8ff, 0.70);
     rimLight.position.set(-3, 2, -3);
     scene.add(rimLight);
 
@@ -393,10 +398,14 @@
           const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
           for (const mat of mats) {
             if (!mat) continue;
-            mat.metalness = Math.min(mat.metalness ?? 0, 0.15);
-            mat.roughness = Math.max(mat.roughness ?? 0.6, 0.45);
+            // Chất liệu vinyl / PVC anime cao cấp, phản xạ specular nét, màu đậm sâu
+            mat.metalness = Math.min(mat.metalness ?? 0, 0.08);
+            mat.roughness = Math.min(mat.roughness ?? 0.35, 0.32);
             if (mat.map) {
               mat.map.colorSpace = THREE.SRGBColorSpace;
+              if (renderer.capabilities && renderer.capabilities.getMaxAnisotropy) {
+                mat.map.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+              }
             }
             mat.needsUpdate = true;
           }
